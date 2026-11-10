@@ -12,9 +12,7 @@ import type { OutputAudioFormat, QualityPreset } from '../types';
 import {
   Settings as SettingsIcon,
   Sliders,
-  Cpu,
   HardDrive,
-  RefreshCw,
   Info,
   CheckCircle,
   AlertTriangle,
@@ -22,12 +20,11 @@ import {
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
-  const { settings, updateSettings, engineHealth, isCheckingEngine, checkEngine } = useSettingsStore();
+  const { settings, updateSettings } = useSettingsStore();
   const { loadProjects } = useProjectStore();
   const { loadJobs } = useJobStore();
   const { showNotification } = useNotificationStore();
 
-  const [engineUrlInput, setEngineUrlInput] = useState<string>(settings.pythonEngineUrl);
   const [storageInfo, setStorageInfo] = useState<{
     projectsCount: number;
     jobsCount: number;
@@ -61,16 +58,6 @@ export const SettingsPage: React.FC = () => {
       isCancelled = true;
     };
   }, []);
-
-  const handleSaveEngineUrl = async () => {
-    await updateSettings({ pythonEngineUrl: engineUrlInput.trim() });
-    showNotification({
-      type: 'success',
-      title: 'Engine URL Saved',
-      message: `Daemon endpoint updated to ${engineUrlInput.trim()}`,
-    });
-    checkEngine();
-  };
 
   const handleClearCache = async () => {
     try {
@@ -121,7 +108,7 @@ export const SettingsPage: React.FC = () => {
           <span>Application Settings</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Configure audio defaults, Python engine endpoints, hardware acceleration and local storage.
+          Configure audio export formats, loudness normalization and local browser storage.
         </p>
       </div>
 
@@ -156,9 +143,9 @@ export const SettingsPage: React.FC = () => {
                 onChange={(e) => updateSettings({ defaultQuality: e.target.value as QualityPreset })}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-[#101827] border border-white/10 text-white text-xs focus:outline-hidden focus:border-[#7357F5]"
               >
-                <option value="fast">Fast (Reduced shifts, minimal latency)</option>
-                <option value="high">High Quality (Demucs default shifts)</option>
-                <option value="ultra">Ultra Fidelity (Maximum overlap iterations)</option>
+                <option value="fast">Fast (Instant preview)</option>
+                <option value="high">High Quality (Recommended)</option>
+                <option value="ultra">Ultra Fidelity (Maximum precision)</option>
               </select>
             </div>
 
@@ -166,7 +153,7 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#101827] border border-white/10">
               <div>
                 <p className="font-medium text-white">Loudness Normalization</p>
-                <p className="text-[11px] text-slate-400">Default new separations to -14 LUFS broadcast standard</p>
+                <p className="text-[11px] text-slate-400">Default new separations to -14 LUFS standard</p>
               </div>
               <input
                 type="checkbox"
@@ -179,9 +166,9 @@ export const SettingsPage: React.FC = () => {
             {/* Low-Memory Optimization */}
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#101827] border border-white/10">
               <div>
-                <p className="font-medium text-white">Low-Memory Mode (4GB/8GB RAM Optimization)</p>
+                <p className="font-medium text-white">Low-Memory Mode</p>
                 <p className="text-[11px] text-slate-400">
-                  Aggressively revoke temporary audio blobs and avoid uncompressed PCM caching
+                  Optimize memory usage for smooth playback on lower-spec devices
                 </p>
               </div>
               <input
@@ -190,81 +177,6 @@ export const SettingsPage: React.FC = () => {
                 onChange={(e) => updateSettings({ lowMemoryMode: e.target.checked })}
                 className="w-4 h-4 rounded-sm accent-[#7357F5] cursor-pointer"
               />
-            </div>
-          </div>
-        </Card>
-
-        {/* Processing Engine Settings */}
-        <Card className="p-6 sm:p-7 space-y-6">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div className="flex items-center gap-2.5">
-              <Cpu className="w-5 h-5 text-[#3984FF]" />
-              <h3 className="text-base font-semibold text-white">Demucs AI Engine Daemon</h3>
-            </div>
-            <span
-              className={`text-xs px-2.5 py-0.5 rounded-full border ${
-                engineHealth.connected
-                  ? 'bg-[#16C784]/15 text-[#16C784] border-[#16C784]/30'
-                  : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-              }`}
-            >
-              {engineHealth.connected ? 'Online' : 'Offline'}
-            </span>
-          </div>
-
-          <div className="space-y-4 text-xs">
-            {/* Daemon URL Input */}
-            <div className="space-y-1.5">
-              <label className="font-medium text-slate-300">Local Daemon URL</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={engineUrlInput}
-                  onChange={(e) => setEngineUrlInput(e.target.value)}
-                  placeholder="http://127.0.0.1:8524"
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#101827] border border-white/10 text-white text-xs font-mono focus:outline-hidden focus:border-[#3984FF]"
-                />
-                <button
-                  onClick={handleSaveEngineUrl}
-                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium transition-colors"
-                >
-                  Save
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Default loopback endpoint (127.0.0.1:8524) for local Demucs neural separation.
-              </p>
-            </div>
-
-            {/* Hardware Preference */}
-            <div className="space-y-1.5">
-              <label className="font-medium text-slate-300">Hardware Compute Target</label>
-              <select
-                value={settings.devicePreference}
-                onChange={(e) =>
-                  updateSettings({
-                    devicePreference: e.target.value as 'auto' | 'cuda' | 'cpu' | 'directml',
-                  })
-                }
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#101827] border border-white/10 text-white text-xs focus:outline-hidden focus:border-[#3984FF]"
-              >
-                <option value="auto">Auto-detect (Prefer GPU if available)</option>
-                <option value="cuda">NVIDIA CUDA GPU</option>
-                <option value="cpu">CPU Multithreaded (Universal compatibility)</option>
-                <option value="directml">DirectML (Windows AMD/Intel GPU acceleration)</option>
-              </select>
-            </div>
-
-            {/* Test Connection Button */}
-            <div className="pt-2">
-              <button
-                onClick={checkEngine}
-                disabled={isCheckingEngine}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#3984FF]/10 hover:bg-[#3984FF]/20 text-[#3984FF] border border-[#3984FF]/30 font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isCheckingEngine ? 'animate-spin' : ''}`} />
-                <span>{isCheckingEngine ? 'Testing Connection...' : 'Ping Python AI Daemon'}</span>
-              </button>
             </div>
           </div>
         </Card>
@@ -325,17 +237,17 @@ export const SettingsPage: React.FC = () => {
         <Card className="p-6 sm:p-7 space-y-6">
           <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
             <Info className="w-5 h-5 text-[#7357F5]" />
-            <h3 className="text-base font-semibold text-white">About Vocal Studio AI</h3>
+            <h3 className="text-base font-semibold text-white">About Vocal Remover</h3>
           </div>
 
           <div className="space-y-3.5 text-xs">
             <div className="flex justify-between py-1 border-b border-white/5">
-              <span className="text-slate-400">Release Stage:</span>
-              <span className="font-semibold text-[#7357F5]">Stage 1 (Frontend Architecture)</span>
+              <span className="text-slate-400">Application:</span>
+              <span className="font-semibold text-[#7357F5]">Vocal Remover Web Edition</span>
             </div>
             <div className="flex justify-between py-1 border-b border-white/5">
               <span className="text-slate-400">Build Version:</span>
-              <span className="font-mono text-white">v1.0.0-stage1.production</span>
+              <span className="font-mono text-white">v1.2.0</span>
             </div>
             <div className="flex justify-between py-1 border-b border-white/5">
               <span className="text-slate-400">Host Environment:</span>

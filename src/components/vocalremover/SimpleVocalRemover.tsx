@@ -40,7 +40,6 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
   const [progress, setProgress] = useState<number>(0);
   const [stageText, setStageText] = useState<string>('Preparing song...');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [engineUsed, setEngineUsed] = useState<'demucs' | 'browser-dsp'>('demucs');
 
   // Audio Result URLs and Blobs
   const [instrumentalUrl, setInstrumentalUrl] = useState<string | null>(null);
@@ -107,7 +106,6 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
   // In-Browser DSP Fallback (100% offline via Web Audio API)
   const runBrowserDSP = useCallback(
     async (audioFile: File) => {
-      setEngineUsed('browser-dsp');
       setStageText('Decoding audio in browser...');
       setProgress(30);
 
@@ -232,9 +230,8 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
 
       // 1. Try Demucs AI Engine if connected
       if (engineHealth.connected) {
-        setEngineUsed('demucs');
         try {
-          setStageText('Uploading song to local Demucs AI engine...');
+          setStageText('Processing song...');
           setProgress(15);
 
           const jobResponse = await localEngineService.createSeparationJob(
@@ -255,7 +252,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               if (jobStatus.status === 'processing') {
                 const currentPct = jobStatus.progress || 35;
                 setProgress(Math.min(95, Math.max(30, currentPct)));
-                setStageText(jobStatus.stage || 'Demucs neural network is isolating vocals and music...');
+                setStageText(jobStatus.stage || 'Isolating vocals and music...');
               } else if (jobStatus.status === 'completed') {
                 if (pollTimerRef.current) clearInterval(pollTimerRef.current);
                 setProgress(95);
@@ -514,23 +511,8 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
             </h1>
             <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto">
               Extract the <strong>instrumental (karaoke)</strong> and remove vocals from any song.
-              100% free, private, and runs directly on your computer.
+              100% free, fast, and high quality.
             </p>
-          </div>
-
-          {/* Engine Status Banner */}
-          <div className="flex items-center justify-center">
-            {engineHealth.connected ? (
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#16C784]/15 border border-[#16C784]/30 text-[#16C784] text-xs font-semibold shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-[#16C784] animate-pulse" />
-                <span>AI Separation Active (Demucs Neural Network)</span>
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#3984FF]/15 border border-[#3984FF]/30 text-[#3984FF] text-xs font-semibold shadow-xs">
-                <Zap className="w-3.5 h-3.5" />
-                <span>Fast In-Browser Engine Active</span>
-              </div>
-            )}
           </div>
 
           {/* Big Audio Dropzone */}
@@ -556,7 +538,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               </div>
               <div>
                 <p className="font-semibold text-white">AI Vocal Removal</p>
-                <p className="text-[11px] text-slate-400">Pristine separation using Demucs AI</p>
+                <p className="text-[11px] text-slate-400">High fidelity vocal and music isolation</p>
               </div>
             </div>
 
@@ -565,8 +547,8 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                 <Zap className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-semibold text-white">100% Offline & Private</p>
-                <p className="text-[11px] text-slate-400">Your songs never leave your PC</p>
+                <p className="font-semibold text-white">Private & Secure</p>
+                <p className="text-[11px] text-slate-400">Audio processed safely and directly</p>
               </div>
             </div>
           </div>
@@ -604,9 +586,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           </div>
 
           <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-            {engineUsed === 'demucs'
-              ? 'Deep neural inference in progress. All processing remains 100% on your machine.'
-              : 'Processing audio in-browser via Web Audio API.'}
+            Extracting vocal and instrumental audio tracks...
           </p>
 
           <button

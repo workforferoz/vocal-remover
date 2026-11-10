@@ -467,7 +467,7 @@ export const Projects: React.FC = () => {
               </div>
               {detailProject.backendJobId && (
                 <div className="flex justify-between py-1">
-                  <span className="text-slate-400">Demucs Job ID:</span>
+                  <span className="text-slate-400">Task ID:</span>
                   <span className="font-mono text-[#16C784]">{detailProject.backendJobId}</span>
                 </div>
               )}

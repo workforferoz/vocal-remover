@@ -8,3 +8,4 @@ allprojects {
         mavenCentral()
     }
 }
+

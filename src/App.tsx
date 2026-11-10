@@ -11,20 +11,11 @@ const NewSeparation = lazy(() =>
 const Projects = lazy(() =>
   import('./pages/Projects').then((module) => ({ default: module.Projects }))
 );
-const HistoryPage = lazy(() =>
-  import('./pages/History').then((module) => ({ default: module.HistoryPage }))
-);
 const SettingsPage = lazy(() =>
   import('./pages/Settings').then((module) => ({ default: module.SettingsPage }))
 );
-const Help = lazy(() =>
-  import('./pages/Help').then((module) => ({ default: module.Help }))
-);
 const StudioPage = lazy(() =>
   import('./pages/Studio').then((module) => ({ default: module.StudioPage }))
-);
-const ModelsPage = lazy(() =>
-  import('./pages/Models').then((module) => ({ default: module.ModelsPage }))
 );
 
 const PageLoader: React.FC = () => (
@@ -56,14 +47,7 @@ export const App: React.FC = () => {
               </Suspense>
             }
           />
-          <Route
-            path="history"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <HistoryPage />
-              </Suspense>
-            }
-          />
+          <Route path="history" element={<Navigate to="/projects" replace />} />
           <Route
             path="settings"
             element={
@@ -72,14 +56,7 @@ export const App: React.FC = () => {
               </Suspense>
             }
           />
-          <Route
-            path="help"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <Help />
-              </Suspense>
-            }
-          />
+          <Route path="help" element={<Navigate to="/" replace />} />
           <Route
             path="studio/:projectId"
             element={
@@ -88,14 +65,7 @@ export const App: React.FC = () => {
               </Suspense>
             }
           />
-          <Route
-            path="models"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ModelsPage />
-              </Suspense>
-            }
-          />
+          <Route path="models" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
