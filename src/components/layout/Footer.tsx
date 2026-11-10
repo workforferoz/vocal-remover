@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Sparkles, Zap, ExternalLink } from 'lucide-react';
+import { Download, Sparkles, Zap } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -38,22 +38,10 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="text-center text-xs text-slate-400 pt-3 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>
-            Designed and developed by <span className="text-white font-medium">Ayesha Tech Studio</span>
-          </span>
-          <a
-            href="https://www.karokemaker.online/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-400 hover:text-[#3984FF] transition-colors flex items-center gap-1 text-[11px]"
-          >
-            <span>karokemaker.online</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
+        <div className="text-center text-xs text-slate-400 pt-3 border-t border-white/5">
+          Designed and developed by <span className="text-white font-medium">Ayesha Tech Studio</span>
         </div>
       </div>
     </footer>
   );
 };
-
