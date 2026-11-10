@@ -18,8 +18,6 @@ import {
   Download,
   RotateCcw,
   Volume2,
-  Sparkles,
-  Zap,
   CheckCircle2,
   RefreshCw,
   AlertCircle,
@@ -518,39 +516,6 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           {/* Big Audio Dropzone */}
           <div className="p-2 sm:p-4 rounded-3xl bg-[#151F30]/80 border border-white/10 shadow-2xl backdrop-blur-md">
             <FileDropzone onFileAccepted={(f) => processSong(f)} />
-          </div>
-
-          {/* Feature Highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 text-xs text-slate-400">
-            <div className="p-3.5 rounded-2xl bg-[#101827] border border-white/5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
-                <Download className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-semibold text-white">Instant Download</p>
-                <p className="text-[11px] text-slate-400">Download clean instrumental in 16-bit WAV</p>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-[#101827] border border-white/5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#7357F5]/10 text-[#7357F5] flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-semibold text-white">AI Vocal Removal</p>
-                <p className="text-[11px] text-slate-400">High fidelity vocal and music isolation</p>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-[#101827] border border-white/5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-semibold text-white">Private & Secure</p>
-                <p className="text-[11px] text-slate-400">Audio processed safely and directly</p>
-              </div>
-            </div>
           </div>
         </div>
       )}
