@@ -1,7 +1,7 @@
 {
-  "name": "Vocal Studio AI",
-  "short_name": "Vocal Studio",
-  "description": "Professional music source-separation workstation. Separate vocals, instruments, drums, and bass locally.",
+  "name": "Vocal Remover",
+  "short_name": "Vocal Remover",
+  "description": "Extract the instrumental and remove vocals from any song. Designed and developed by Ayesha Tech Studio.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",

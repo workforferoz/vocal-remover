@@ -38,10 +38,11 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="text-center text-[11px] text-slate-500 pt-2 border-t border-white/5">
-          Vocal Remover • Free, fast & high quality vocal separation
+        <div className="text-center text-xs text-slate-400 pt-3 border-t border-white/5">
+          Designed and developed by <span className="text-white font-medium">Ayesha Tech Studio</span>
         </div>
       </div>
     </footer>
   );
 };
+
