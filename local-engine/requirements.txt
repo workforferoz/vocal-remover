@@ -1,0 +1,16 @@
+# Vocal Studio AI Local Separation Engine Dependencies
+# Verified and tested on Python 3.11 for Windows x86_64
+
+fastapi>=0.115.0
+uvicorn>=0.30.0
+python-multipart>=0.0.12
+pydantic>=2.9.0
+pydantic-settings>=2.5.0
+psutil>=5.9.0
+soundfile>=0.12.0
+torch==2.15.0
+torchaudio==2.11.1
+demucs==4.1.0
+httpx>=0.27.0
+pytest>=8.0.0
+

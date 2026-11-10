@@ -1,0 +1,58 @@
+{
+  "name": "Vocal Studio AI",
+  "short_name": "Vocal Studio",
+  "description": "Professional music source-separation workstation. Separate vocals, instruments, drums, and bass locally.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080D18",
+  "theme_color": "#101827",
+  "categories": [
+    "music",
+    "audio",
+    "utilities",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Separation",
+      "short_name": "Separate",
+      "url": "/new",
+      "description": "Upload a song to separate vocals and stems"
+    },
+    {
+      "name": "My Projects",
+      "short_name": "Projects",
+      "url": "/projects",
+      "description": "View saved projects and separated stems"
+    },
+    {
+      "name": "AI Models",
+      "short_name": "Models",
+      "url": "/models",
+      "description": "Manage Demucs models and offline availability"
+    }
+  ]
+}
+
