@@ -76,11 +76,11 @@ export const Header: React.FC = () => {
 
           {/* Karaoke Maker Online link button */}
           <a
-            href="https://karaokemaker.online"
+            href="https://www.karokemaker.online/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#3984FF]/15 to-[#7357F5]/20 hover:from-[#3984FF]/25 hover:to-[#7357F5]/30 text-white border border-[#3984FF]/35 transition-all shadow-xs group"
-            title="Open karaokemaker.online in new tab"
+            title="Open https://www.karokemaker.online/"
           >
             <Mic2 className="w-4 h-4 text-[#3984FF] group-hover:scale-110 transition-transform flex-shrink-0" />
             <span>Karaoke Maker</span>

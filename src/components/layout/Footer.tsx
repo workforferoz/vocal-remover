@@ -43,12 +43,12 @@ export const Footer: React.FC = () => {
             Designed and developed by <span className="text-white font-medium">Ayesha Tech Studio</span>
           </span>
           <a
-            href="https://karaokemaker.online"
+            href="https://www.karokemaker.online/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-slate-400 hover:text-[#3984FF] transition-colors flex items-center gap-1 text-[11px]"
           >
-            <span>karaokemaker.online</span>
+            <span>karokemaker.online</span>
             <ExternalLink className="w-3 h-3" />
           </a>
         </div>
