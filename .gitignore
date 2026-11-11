@@ -31,3 +31,10 @@ local-engine/models
 local-engine/__pycache__
 *.pyc
 
+# Private License Keys & Secrets (Never commit to public git)
+LICENSE_KEYS*.txt
+*.license.txt
+src/services/authorizedKeys.json
+authorizedKeys.json
+
+
