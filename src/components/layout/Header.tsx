@@ -4,8 +4,6 @@ import { usePWA } from '../../hooks/usePWA';
 import {
   Music,
   Sparkles,
-  Mic2,
-  ExternalLink,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -42,18 +40,30 @@ export const Header: React.FC = () => {
           </div>
         </Link>
 
-        {/* Right: Karaoke Maker Online link button */}
+        {/* Right: Karoke Maker by Ayesha Tech Studio button */}
         <div className="flex items-center">
           <a
             href="https://www.karokemaker.online/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#3984FF]/15 to-[#7357F5]/20 hover:from-[#3984FF]/25 hover:to-[#7357F5]/30 text-white border border-[#3984FF]/35 transition-all shadow-xs group"
-            title="Open https://www.karokemaker.online/"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all shadow-xs group cursor-pointer"
+            title="Open Karoke Maker by Ayesha Tech Studio"
           >
-            <Mic2 className="w-4 h-4 text-[#3984FF] group-hover:scale-110 transition-transform flex-shrink-0" />
-            <span>Karaoke Maker</span>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-black/40 flex items-center justify-center flex-shrink-0 shadow-xs ring-1 ring-white/10 group-hover:scale-105 transition-transform">
+              <img
+                src="/karaoke-logo.png"
+                alt="Karoke Maker"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex flex-col text-left justify-center">
+              <span className="font-extrabold text-sm sm:text-base text-white tracking-tight leading-tight">
+                Karoke Maker
+              </span>
+              <span className="text-[10px] sm:text-[11px] text-slate-300 font-medium leading-tight">
+                by Ayesha Tech Studio
+              </span>
+            </div>
           </a>
         </div>
       </header>
