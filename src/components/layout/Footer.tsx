@@ -43,6 +43,11 @@ export const Footer: React.FC = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/tokens" className="hover:text-white transition-colors">
+                    Buy Tokens & License
+                  </Link>
+                </li>
+                <li>
                   <Link to="/projects" className="hover:text-white transition-colors">
                     My Songs & Stems
                   </Link>

@@ -14,6 +14,9 @@ const Projects = lazy(() =>
 const SettingsPage = lazy(() =>
   import('./pages/Settings').then((module) => ({ default: module.SettingsPage }))
 );
+const TokensPage = lazy(() =>
+  import('./pages/Tokens').then((module) => ({ default: module.TokensPage }))
+);
 const StudioPage = lazy(() =>
   import('./pages/Studio').then((module) => ({ default: module.StudioPage }))
 );
@@ -56,6 +59,16 @@ export const App: React.FC = () => {
               </Suspense>
             }
           />
+          <Route
+            path="tokens"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TokensPage />
+              </Suspense>
+            }
+          />
+          <Route path="buy" element={<Navigate to="/tokens" replace />} />
+          <Route path="pricing" element={<Navigate to="/tokens" replace />} />
           <Route
             path="settings"
             element={
