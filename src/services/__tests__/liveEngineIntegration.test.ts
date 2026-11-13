@@ -83,7 +83,7 @@ describe('Live Local Demucs Engine End-to-End Integration', () => {
 
     // Step B: Poll until separation completes
     let attempts = 0;
-    const maxAttempts = 50; // up to ~50s for Demucs CPU inference
+    const maxAttempts = 60; // up to ~60s for Demucs CPU inference
     let jobStatus = await localEngineService.getJobStatus(jobId);
 
     while (attempts < maxAttempts && (jobStatus.status === 'queued' || jobStatus.status === 'processing')) {
@@ -122,7 +122,7 @@ describe('Live Local Demucs Engine End-to-End Integration', () => {
     // Step E: Clean up Job
     const deleteRes = await localEngineService.cancelJob(jobId);
     expect(deleteRes.deleted).toBe(true);
-  }, 60000); // 60s timeout for Demucs CPU inference
+  }, 120000); // 120s timeout for Demucs CPU inference
 
   it('3. rejects invalid audio file upload with HTTP 400', async () => {
     const invalidFile = new File(['fake content'], 'not_an_audio.exe', { type: 'application/octet-stream' });

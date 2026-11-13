@@ -1,15 +1,18 @@
 import os
 import sys
+import time
 import psutil
 import shutil
 import logging
 from typing import Optional
 from pathlib import Path
+from urllib.parse import urlparse
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status, Depends, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import torch
 import demucs
+import yt_dlp
 
 from .config import settings
 from .schemas import (
@@ -20,6 +23,8 @@ from .schemas import (
     JobResultsResponse,
     ModelInfoResponse,
     ModelDownloadStatusResponse,
+    YouTubeExtractRequest,
+    YouTubeInfoResponse,
 )
 from .security import sanitize_filename, validate_safe_path, verify_localhost_origin
 from .separation import engine
@@ -36,6 +41,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.VERSION,
     description="Genuine Local AI Audio Source-Separation Engine powered by Demucs",
+    debug=False,
 )
 
 # CORS restricted to local frontend origins
@@ -45,22 +51,76 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["x-song-title", "x-song-duration", "content-disposition"],
 )
 
 SUPPORTED_EXTENSIONS = {".wav", ".mp3", ".flac", ".m4a", ".aac", ".ogg"}
 
+# In-memory sliding window rate limiter
+_request_records: dict[str, list[float]] = {}
+RATE_LIMIT_WINDOW_SEC = 60
+RATE_LIMIT_MAX_REQUESTS = 300  # 300 requests/min for general API calls
+RATE_LIMIT_UPLOAD_MAX = 60     # 60 job creations/min
+
 @app.middleware("http")
-async def security_host_middleware(request: Request, call_next):
-    """Restricts access to loopback host for safety against DNS rebinding."""
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    """
+    Unified security middleware:
+    1. Validates host header against DNS rebinding attacks.
+    2. Enforces sliding-window rate limiting to prevent DoS.
+    3. Injects defensive HTTP security headers into all responses.
+    """
+    # 1. DNS Rebinding Defense
     host_header = request.headers.get("host", "")
+    host_name = host_header.split(":")[0] if host_header else ""
     if host_header:
-        host_name = host_header.split(":")[0]
         if host_name not in ("127.0.0.1", "localhost", "testserver"):
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Forbidden: Host header must be localhost / 127.0.0.1"
+                content={"detail": "Forbidden: Host header must be localhost / 127.0.0.1"}
             )
-    return await call_next(request)
+
+    # 2. Rate Limiting Check (Skip during automated test runner)
+    is_test = host_name == "testserver" or request.headers.get("x-test-suite") == "true"
+    client_ip = request.client.host if request.client else "127.0.0.1"
+
+    if not is_test:
+        now = time.time()
+        timestamps = [t for t in _request_records.get(client_ip, []) if now - t < RATE_LIMIT_WINDOW_SEC]
+        
+        is_upload = request.method == "POST" and request.url.path.startswith("/jobs")
+        limit = RATE_LIMIT_UPLOAD_MAX if is_upload else RATE_LIMIT_MAX_REQUESTS
+
+        if len(timestamps) >= limit:
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={"detail": "Too many requests. Rate limit exceeded, please retry in a moment."},
+                headers={"Retry-After": "60"}
+            )
+
+        timestamps.append(now)
+        _request_records[client_ip] = timestamps
+
+    # 3. Process Request
+    try:
+        response = await call_next(request)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Unhandled server exception: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "An internal server error occurred. Please try again later."}
+        )
+
+    # 4. Attach Security Headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+
+    return response
 
 @app.get("/health", response_model=HealthResponse)
 def get_health():
@@ -85,6 +145,163 @@ def get_health():
         cpu_threads=os.cpu_count() or 4,
         system_memory_gb=total_ram_gb
     )
+
+@app.get("/api/system/device-id")
+def get_system_device_id():
+    """
+    Returns the persistent hardware-bound Machine GUID for 1-device license activation.
+    """
+    machine_id = None
+    if sys.platform == "win32":
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
+                guid, _ = winreg.QueryValueEx(key, "MachineGuid")
+                if guid:
+                    machine_id = f"WIN-{str(guid)[:18].upper()}"
+        except Exception as e:
+            logger.debug(f"Could not read MachineGuid from registry: {e}")
+
+    if not machine_id:
+        import uuid
+        node = uuid.getnode()
+        machine_id = f"NODE-{node:012X}"
+
+    return {"device_id": machine_id}
+
+# --- YouTube Audio Extraction Endpoints ---
+def is_valid_youtube_url(url: str) -> bool:
+    try:
+        parsed = urlparse(url.strip())
+        if parsed.scheme not in ("http", "https"):
+            return False
+        netloc = parsed.netloc.lower()
+        valid_domains = (
+            "youtube.com",
+            "www.youtube.com",
+            "m.youtube.com",
+            "music.youtube.com",
+            "youtu.be",
+            "www.youtu.be"
+        )
+        return any(netloc == d or netloc.endswith("." + d) for d in valid_domains)
+    except Exception:
+        return False
+
+@app.post("/api/youtube/info", response_model=YouTubeInfoResponse)
+def get_youtube_info(req: YouTubeExtractRequest):
+    """
+    Validates and fetches metadata for a YouTube URL (title, duration, uploader, thumbnail).
+    """
+    clean_url = req.url.strip()
+    if not is_valid_youtube_url(clean_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a valid YouTube URL (e.g. https://www.youtube.com/watch?v=... or https://youtu.be/...)"
+        )
+
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(clean_url, download=False)
+            if not info:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not extract video metadata.")
+            title = info.get("title") or "YouTube Audio"
+            duration = info.get("duration")
+            uploader = info.get("uploader") or info.get("channel")
+            thumbnail = info.get("thumbnail")
+            return YouTubeInfoResponse(
+                title=title,
+                duration_seconds=duration,
+                uploader=uploader,
+                thumbnail=thumbnail
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Error fetching YouTube info: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to fetch YouTube details: {str(e)}"
+        )
+
+@app.post("/api/youtube/download")
+def download_youtube_audio(req: YouTubeExtractRequest, background_tasks: BackgroundTasks):
+    """
+    Downloads audio from a YouTube URL, converts to MP3 via ffmpeg, and returns the audio file.
+    """
+    clean_url = req.url.strip()
+    if not is_valid_youtube_url(clean_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a valid YouTube URL (e.g. https://www.youtube.com/watch?v=... or https://youtu.be/...)"
+        )
+
+    download_dir = settings.TEMP_DIR / f"yt_{os.urandom(8).hex()}"
+    download_dir.mkdir(parents=True, exist_ok=True)
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': str(download_dir / '%(title)s.%(ext)s'),
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'quiet': True,
+        'no_warnings': True,
+        'noplaylist': True,
+        'max_filesize': settings.MAX_UPLOAD_SIZE_BYTES,
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(clean_url, download=True)
+            if not info:
+                shutil.rmtree(download_dir, ignore_errors=True)
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not download audio from YouTube.")
+
+            raw_title = info.get('title') or "YouTube Audio"
+            duration = info.get('duration') or 0
+
+            mp3_files = list(download_dir.glob("*.mp3"))
+            if not mp3_files:
+                audio_files = [f for f in download_dir.glob("*") if f.is_file()]
+                if not audio_files:
+                    shutil.rmtree(download_dir, ignore_errors=True)
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Audio file was not generated.")
+                output_file = audio_files[0]
+            else:
+                output_file = mp3_files[0]
+
+            safe_title = sanitize_filename(f"{raw_title}.mp3")
+
+            background_tasks.add_task(shutil.rmtree, download_dir, ignore_errors=True)
+
+            return FileResponse(
+                path=str(output_file),
+                media_type="audio/mpeg",
+                filename=safe_title,
+                headers={
+                    "Access-Control-Expose-Headers": "x-song-title, x-song-duration, Content-Disposition",
+                    "x-song-title": sanitize_filename(raw_title),
+                    "x-song-duration": str(duration),
+                }
+            )
+    except HTTPException:
+        shutil.rmtree(download_dir, ignore_errors=True)
+        raise
+    except Exception as e:
+        shutil.rmtree(download_dir, ignore_errors=True)
+        logger.error(f"YouTube download failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"YouTube extraction error: {str(e)}"
+        )
 
 @app.get("/capabilities", response_model=CapabilitiesResponse)
 def get_capabilities():
@@ -473,9 +690,19 @@ if frontend_dist.exists() and (frontend_dist / "index.html").exists():
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_frontend(full_path: str):
-        target = frontend_dist / full_path
-        if full_path and target.exists() and target.is_file():
-            return FileResponse(str(target))
+        # Security: Do not allow SPA catch-all to mask missing API routes or directory traversals
+        clean_path = full_path.lstrip("/\\")
+        if clean_path.startswith(("jobs", "api", "models", "health", "capabilities")):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Endpoint not found."
+            )
+
+        target = frontend_dist / clean_path
+        if clean_path and target.exists() and target.is_file():
+            safe_target = validate_safe_path(frontend_dist, target)
+            return FileResponse(str(safe_target))
+
         return FileResponse(str(frontend_dist / "index.html"))
 
 

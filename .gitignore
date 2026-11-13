@@ -31,10 +31,30 @@ local-engine/models
 local-engine/__pycache__
 *.pyc
 
+# Environment & Secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.cert
+*.pfx
+
 # Private License Keys & Secrets (Never commit to public git)
 LICENSE_KEYS*.txt
+LICENSE_KEYS*.csv
+RECHARGE_CODES*.txt
+RECHARGE_CODES*.csv
 *.license.txt
 src/services/authorizedKeys.json
 authorizedKeys.json
+
+# Android build & cache
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
+*.apk
+*.aab
 
 

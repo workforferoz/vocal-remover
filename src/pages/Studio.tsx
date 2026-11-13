@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { useProjectStore } from '../store/useProjectStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { getProjectById, getAudioBlob, saveProject } from '../services/db';
@@ -34,6 +35,11 @@ import {
 } from 'lucide-react';
 
 export const StudioPage: React.FC = () => {
+  usePageMeta(
+    'Studio Mixer & Multitrack Editor | Vocal Remover',
+    'Mix, isolate, and preview audio stems with real-time waveform timeline.'
+  );
+
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { projects } = useProjectStore();
@@ -280,10 +286,10 @@ export const StudioPage: React.FC = () => {
     setIsABOriginal(isNowOriginal);
     showNotification({
       type: 'info',
-      title: isNowOriginal ? 'A/B: Original Audio Active' : 'A/B: Demucs Stems Active',
+      title: isNowOriginal ? 'A/B: Original Audio Active' : 'A/B: Separated Tracks Active',
       message: isNowOriginal
         ? 'Listening directly to the unseparated reference mix.'
-        : 'Listening to the custom multitrack stem mix.',
+        : 'Listening to the separated audio tracks.',
     });
   };
 
@@ -386,7 +392,7 @@ export const StudioPage: React.FC = () => {
   if (isLoadingProject) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-400 gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-[#7357F5] border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
         <span className="text-xs font-medium">Loading multitrack studio...</span>
       </div>
     );
@@ -401,7 +407,7 @@ export const StudioPage: React.FC = () => {
         </p>
         <button
           onClick={() => navigate('/projects')}
-          className="px-4 py-2 rounded-xl bg-[#7357F5] text-white text-xs font-semibold"
+          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer transition-colors"
         >
           Return to My Projects
         </button>
@@ -427,12 +433,12 @@ export const StudioPage: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
             </button>
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Sliders className="w-6 h-6 text-[#7357F5]" />
+              <Sliders className="w-6 h-6 text-blue-400" />
               <span>{project.name}</span>
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#16C784]/15 text-[#16C784] border border-[#16C784]/30 flex items-center gap-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
-              <span>Demucs Separated</span>
+              <span>Separated</span>
             </span>
           </div>
 
@@ -482,9 +488,10 @@ export const StudioPage: React.FC = () => {
           </button>
 
           <button
+            type="button"
             onClick={handleExportMix}
             disabled={isRenderingExport}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#7357F5] via-[#5b40e6] to-[#3984FF] hover:brightness-110 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
             title="Render custom mix with current volume and mute settings to a single WAV file"
           >
             <Sparkles className="w-4 h-4" />
@@ -500,8 +507,9 @@ export const StudioPage: React.FC = () => {
           {/* Left: Main Transport Buttons */}
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={togglePlayPause}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#7357F5] to-[#3984FF] hover:brightness-110 active:scale-95 shadow-xl shadow-indigo-500/25 flex items-center justify-center text-white transition-all cursor-pointer"
+              className="w-14 h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 shadow-sm flex items-center justify-center text-white transition-colors cursor-pointer"
               title={playbackState === 'playing' ? 'Pause (Space)' : 'Play (Space)'}
             >
               {playbackState === 'playing' ? (
@@ -543,10 +551,11 @@ export const StudioPage: React.FC = () => {
           {/* Center: A/B Comparison Toggle */}
           <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#101827] border border-white/10">
             <button
+              type="button"
               onClick={() => isABOriginal && handleToggleAB()}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 !isABOriginal
-                  ? 'bg-gradient-to-r from-[#7357F5] to-[#3984FF] text-white shadow-md'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -574,7 +583,7 @@ export const StudioPage: React.FC = () => {
                 onClick={() => handleSpeedChange(speed)}
                 className={`px-2.5 py-1 rounded-lg font-mono font-semibold transition-all cursor-pointer ${
                   playbackSpeed === speed
-                    ? 'bg-[#7357F5] text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -595,7 +604,7 @@ export const StudioPage: React.FC = () => {
         {/* Vocal Control & Mixing Presets Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
           <div className="flex items-center gap-2">
-            <Radio className="w-4 h-4 text-[#7357F5]" />
+            <Radio className="w-4 h-4 text-blue-400" />
             <span className="text-xs font-semibold text-white">Mixing Presets:</span>
           </div>
 
@@ -611,7 +620,7 @@ export const StudioPage: React.FC = () => {
                 onClick={() => handleApplyPreset(p.id as StudioPreset)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
                   activePreset === p.id
-                    ? 'bg-[#7357F5]/20 text-[#7357F5] border-[#7357F5]/50 shadow-sm'
+                    ? 'bg-blue-600/20 text-blue-400 border-blue-500/50 shadow-sm'
                     : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border-white/10'
                 }`}
               >
@@ -626,7 +635,7 @@ export const StudioPage: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#7357F5]" />
+            <Layers className="w-4 h-4 text-blue-400" />
             <span>Multitrack Stems Mixer ({stemTracks.length} Channels)</span>
           </h3>
           <span className="text-[11px] text-slate-400">

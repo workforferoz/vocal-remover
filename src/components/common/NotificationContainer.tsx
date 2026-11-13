@@ -16,14 +16,14 @@ export const NotificationContainer: React.FC = () => {
     >
       {notifications.map((n) => {
         let Icon = Info;
-        let borderClass = 'border-blue-500/30';
-        let bgClass = 'bg-[#151F30]';
+        let borderClass = 'border-blue-500/40';
+        let bgClass = 'bg-[#0F172A]';
         let textIconColor = 'text-blue-400';
 
         if (n.type === 'success') {
           Icon = CheckCircle2;
-          borderClass = 'border-[#16C784]/40';
-          textIconColor = 'text-[#16C784]';
+          borderClass = 'border-emerald-500/40';
+          textIconColor = 'text-emerald-400';
         } else if (n.type === 'warning') {
           Icon = AlertTriangle;
           borderClass = 'border-amber-500/40';
@@ -37,7 +37,7 @@ export const NotificationContainer: React.FC = () => {
         return (
           <div
             key={n.id}
-            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border ${borderClass} ${bgClass} shadow-xl backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2`}
+            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border ${borderClass} ${bgClass} shadow-xl transition-all duration-150 animate-in fade-in slide-in-from-bottom-2`}
           >
             <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${textIconColor}`} />
             <div className="flex-1 min-w-0">
@@ -45,8 +45,9 @@ export const NotificationContainer: React.FC = () => {
               {n.message && <p className="text-xs text-slate-300 mt-1 leading-relaxed">{n.message}</p>}
             </div>
             <button
+              type="button"
               onClick={() => dismissNotification(n.id)}
-              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />

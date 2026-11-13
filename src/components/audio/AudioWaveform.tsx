@@ -69,7 +69,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
           let bgStyle = 'bg-slate-700/60';
           if (isPlayed) {
-            bgStyle = 'bg-gradient-to-t from-[#7357F5] to-[#3984FF] shadow-sm';
+            bgStyle = 'bg-blue-500';
           } else if (isHovered) {
             bgStyle = 'bg-slate-500';
           }

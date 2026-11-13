@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Reflection;
+using System.IO.Compression;
 using Microsoft.Win32;
 
 namespace VocalRemoverInstaller
@@ -72,11 +73,21 @@ namespace VocalRemoverInstaller
                     Process.Start(psi);
                 }
 
-                MessageBox.Show("Vocal Remover has been uninstalled successfully.", "Vocal Remover", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    "Vocal Remover has been uninstalled successfully.",
+                    "Vocal Remover",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Uninstall error: " + ex.Message, "Vocal Remover", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Uninstall error: " + ex.Message,
+                    "Vocal Remover",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
     }
@@ -97,11 +108,11 @@ namespace VocalRemoverInstaller
         private void InitializeComponent()
         {
             this.Text = "Vocal Remover Setup";
-            this.Size = new Size(520, 420);
+            this.Size = new Size(520, 430);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
-            this.BackColor = Color.FromArgb(16, 24, 39); // #101827
+            this.BackColor = Color.FromArgb(13, 21, 39); // #0D1527
             this.ForeColor = Color.FromArgb(248, 250, 252); // #F8FAFC
             this.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
@@ -121,7 +132,7 @@ namespace VocalRemoverInstaller
             topPanel.Controls.Add(lblTitle);
 
             Label lblSubtitle = new Label();
-            lblSubtitle.Text = "Extract instrumentals & remove vocals using browser AI";
+            lblSubtitle.Text = "Extract instrumentals & remove vocals - Ayesha Tech Studio";
             lblSubtitle.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
             lblSubtitle.ForeColor = Color.FromArgb(148, 163, 184); // #94A3B8
             lblSubtitle.Location = new Point(24, 46);
@@ -131,27 +142,27 @@ namespace VocalRemoverInstaller
             // Main Content Area
             Panel mainPanel = new Panel();
             mainPanel.Location = new Point(24, 105);
-            mainPanel.Size = new Size(456, 200);
+            mainPanel.Size = new Size(456, 215);
             this.Controls.Add(mainPanel);
 
             Label lblUrlTitle = new Label();
-            lblUrlTitle.Text = "Online Web App URL (Vercel / Online URL):";
+            lblUrlTitle.Text = "Application Engine URL (Local or Hosted):";
             lblUrlTitle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblUrlTitle.Location = new Point(0, 5);
             lblUrlTitle.AutoSize = true;
             mainPanel.Controls.Add(lblUrlTitle);
 
             txtUrl = new TextBox();
-            txtUrl.Text = "https://vocal-remover.vercel.app";
+            txtUrl.Text = "http://localhost:5173";
             txtUrl.Location = new Point(0, 30);
             txtUrl.Size = new Size(456, 26);
-            txtUrl.BackColor = Color.FromArgb(21, 31, 48); // #151F30
+            txtUrl.BackColor = Color.FromArgb(15, 23, 42); // #0F172A
             txtUrl.ForeColor = Color.White;
             txtUrl.BorderStyle = BorderStyle.FixedSingle;
             mainPanel.Controls.Add(txtUrl);
 
             Label lblUrlHelp = new Label();
-            lblUrlHelp.Text = "Enter your live Vercel app link. You can update this anytime in config.txt.";
+            lblUrlHelp.Text = "Auto-detects Demucs engine (8524) and Vite (5173), or uses offline standalone mode.";
             lblUrlHelp.Font = new Font("Segoe UI", 8F);
             lblUrlHelp.ForeColor = Color.FromArgb(148, 163, 184);
             lblUrlHelp.Location = new Point(0, 58);
@@ -173,8 +184,8 @@ namespace VocalRemoverInstaller
             mainPanel.Controls.Add(chkStartMenu);
 
             lblStatus = new Label();
-            lblStatus.Text = "Ready to install.";
-            lblStatus.ForeColor = Color.FromArgb(22, 199, 132); // #16C784
+            lblStatus.Text = "Ready to install. Click Install & Launch below.";
+            lblStatus.ForeColor = Color.FromArgb(52, 211, 153); // #34D399 (Emerald)
             lblStatus.Location = new Point(0, 165);
             lblStatus.AutoSize = true;
             mainPanel.Controls.Add(lblStatus);
@@ -183,8 +194,8 @@ namespace VocalRemoverInstaller
             btnInstall = new Button();
             btnInstall.Text = "Install & Launch";
             btnInstall.Size = new Size(140, 38);
-            btnInstall.Location = new Point(340, 325);
-            btnInstall.BackColor = Color.FromArgb(115, 87, 245); // #7357F5
+            btnInstall.Location = new Point(340, 330);
+            btnInstall.BackColor = Color.FromArgb(37, 99, 235); // #2563EB
             btnInstall.ForeColor = Color.White;
             btnInstall.FlatStyle = FlatStyle.Flat;
             btnInstall.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
@@ -195,8 +206,8 @@ namespace VocalRemoverInstaller
             Button btnCancel = new Button();
             btnCancel.Text = "Cancel";
             btnCancel.Size = new Size(90, 38);
-            btnCancel.Location = new Point(238, 325);
-            btnCancel.BackColor = Color.FromArgb(21, 31, 48);
+            btnCancel.Location = new Point(238, 330);
+            btnCancel.BackColor = Color.FromArgb(30, 41, 59); // #1E293B
             btnCancel.ForeColor = Color.White;
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Click += (s, e) => this.Close();
@@ -207,7 +218,7 @@ namespace VocalRemoverInstaller
         {
             btnInstall.Enabled = false;
             lblStatus.Text = "Installing Vocal Remover...";
-            lblStatus.ForeColor = Color.FromArgb(57, 132, 255);
+            lblStatus.ForeColor = Color.FromArgb(96, 165, 250); // #60A5FA
             Application.DoEvents();
 
             try
@@ -222,29 +233,57 @@ namespace VocalRemoverInstaller
                     Directory.CreateDirectory(targetDir);
                 }
 
-                // Extract embedded VocalRemover.exe
+                // 1. Extract embedded VocalRemover.exe
                 string exePath = Path.Combine(targetDir, "VocalRemover.exe");
                 ExtractEmbeddedFile("VocalRemover.exe", exePath);
 
-                // Write uninstaller copy
+                // 2. Extract embedded app.ico
+                string icoPath = Path.Combine(targetDir, "app.ico");
+                try
+                {
+                    ExtractEmbeddedFile("app.ico", icoPath);
+                }
+                catch { }
+
+                // 3. Extract and unpack embedded dist.zip (standalone web app assets)
+                string tempZip = Path.Combine(targetDir, "dist.zip");
+                string distDir = Path.Combine(targetDir, "dist");
+                try
+                {
+                    ExtractEmbeddedFile("dist.zip", tempZip);
+                    if (File.Exists(tempZip))
+                    {
+                        if (Directory.Exists(distDir))
+                        {
+                            try { Directory.Delete(distDir, true); } catch { }
+                        }
+                        ZipFile.ExtractToDirectory(tempZip, distDir);
+                        File.Delete(tempZip);
+                    }
+                }
+                catch { }
+
+                // 4. Write uninstaller copy
                 string uninstallerPath = Path.Combine(targetDir, "Uninstall.exe");
                 File.Copy(Application.ExecutablePath, uninstallerPath, true);
 
-                // Write config.txt
+                // 5. Write config.txt
                 string configPath = Path.Combine(targetDir, "config.txt");
                 File.WriteAllText(configPath, txtUrl.Text.Trim());
 
-                // Create Desktop Shortcut
+                string shortcutIcon = File.Exists(icoPath) ? icoPath : exePath;
+
+                // 6. Create Desktop Shortcut
                 if (chkDesktop.Checked)
                 {
                     string desktopLnk = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                         "Vocal Remover.lnk"
                     );
-                    CreateShortcut(desktopLnk, exePath, "Vocal Remover - Extract Instrumentals & Remove Vocals");
+                    CreateShortcut(desktopLnk, exePath, shortcutIcon, "Vocal Remover - Extract Karaoke & Separate Vocals");
                 }
 
-                // Create Start Menu Shortcut
+                // 7. Create Start Menu Shortcut
                 if (chkStartMenu.Checked)
                 {
                     string startMenuDir = Path.Combine(
@@ -252,17 +291,17 @@ namespace VocalRemoverInstaller
                         @"Programs"
                     );
                     string startLnk = Path.Combine(startMenuDir, "Vocal Remover.lnk");
-                    CreateShortcut(startLnk, exePath, "Vocal Remover");
+                    CreateShortcut(startLnk, exePath, shortcutIcon, "Vocal Remover");
                 }
 
-                // Register Uninstaller in Windows Registry
+                // 8. Register Uninstaller in Windows Registry
                 RegisterUninstaller(targetDir, exePath, uninstallerPath);
 
-                lblStatus.Text = "Installation complete! Launching app...";
-                lblStatus.ForeColor = Color.FromArgb(22, 199, 132);
+                lblStatus.Text = "Installation complete! Launching Vocal Remover...";
+                lblStatus.ForeColor = Color.FromArgb(52, 211, 153);
                 Application.DoEvents();
 
-                // Launch the installed app
+                // 9. Launch the installed app
                 Process.Start(exePath);
 
                 Timer t = new Timer();
@@ -279,7 +318,12 @@ namespace VocalRemoverInstaller
                 btnInstall.Enabled = true;
                 lblStatus.Text = "Installation failed: " + ex.Message;
                 lblStatus.ForeColor = Color.FromArgb(244, 63, 94);
-                MessageBox.Show("Installation Error:\n" + ex.Message, "Vocal Remover Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Installation Error:\n" + ex.Message,
+                    "Vocal Remover Setup",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
@@ -312,14 +356,15 @@ namespace VocalRemoverInstaller
             }
         }
 
-        private void CreateShortcut(string shortcutPath, string targetExe, string description)
+        private void CreateShortcut(string shortcutPath, string targetExe, string iconLocation, string description)
         {
             try
             {
                 string script = string.Format(
-                    "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('{0}'); $s.TargetPath = '{1}'; $s.Description = '{2}'; $s.Save()",
+                    "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('{0}'); $s.TargetPath = '{1}'; $s.IconLocation = '{2}'; $s.Description = '{3}'; $s.Save()",
                     shortcutPath.Replace("'", "''"),
                     targetExe.Replace("'", "''"),
+                    iconLocation.Replace("'", "''"),
                     description.Replace("'", "''")
                 );
 
@@ -347,8 +392,8 @@ namespace VocalRemoverInstaller
                     {
                         key.SetValue("DisplayName", "Vocal Remover");
                         key.SetValue("DisplayIcon", exePath);
-                        key.SetValue("DisplayVersion", "1.2.0");
-                        key.SetValue("Publisher", "Vocal Studio AI");
+                        key.SetValue("DisplayVersion", "1.3.0");
+                        key.SetValue("Publisher", "Ayesha Tech Studio");
                         key.SetValue("InstallLocation", installDir);
                         key.SetValue("UninstallString", string.Format("\"{0}\" /uninstall", uninstallerPath));
                         key.SetValue("NoModify", 1, RegistryValueKind.DWord);
@@ -360,4 +405,3 @@ namespace VocalRemoverInstaller
         }
     }
 }
-

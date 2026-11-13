@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-studio-main: #080D18;
-  --color-studio-secondary: #101827;
-  --color-studio-card: #151F30;
-  --color-studio-card-hover: #1c2a40;
-  --color-studio-border: rgba(255, 255, 255, 0.08);
-  --color-studio-border-hover: rgba(255, 255, 255, 0.16);
-  --color-studio-accent: #7357F5;
-  --color-studio-accent-hover: #6345ec;
-  --color-studio-secondary-accent: #3984FF;
-  --color-studio-success: #16C784;
+  --color-studio-main: #0B1120;
+  --color-studio-secondary: #0F172A;
+  --color-studio-card: #1E293B;
+  --color-studio-card-hover: #334155;
+  --color-studio-border: rgba(255, 255, 255, 0.12);
+  --color-studio-border-hover: rgba(255, 255, 255, 0.24);
+  --color-studio-accent: #2563EB;
+  --color-studio-accent-hover: #1D4ED8;
+  --color-studio-secondary-accent: #0284C7;
+  --color-studio-success: #10B981;
   --color-studio-warning: #F59E0B;
   --color-studio-error: #EF4444;
   --color-studio-text: #F8FAFC;
-  --color-studio-muted: #94A3B8;
-  --color-studio-dim: #64748B;
+  --color-studio-muted: #CBD5E1;
+  --color-studio-dim: #94A3B8;
 }
 
 :root {
@@ -25,7 +25,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #080D18;
+  background-color: #0B1120;
   color: #F8FAFC;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -33,46 +33,27 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom scrollbars for professional studio feel */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #080D18;
+  background: #0B1120;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #334155;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #475569;
 }
 
-/* Studio audio glow effects */
-.glow-primary {
-  box-shadow: 0 0 25px -5px rgba(115, 87, 245, 0.25);
-}
-
-.glow-secondary {
-  box-shadow: 0 0 25px -5px rgba(57, 132, 255, 0.25);
-}
-
-.glow-success {
-  box-shadow: 0 0 25px -5px rgba(22, 199, 132, 0.25);
-}
-
-/* Studio gradient borders */
-.studio-border-gradient {
-  border-image: linear-gradient(to right, rgba(115, 87, 245, 0.4), rgba(57, 132, 255, 0.2)) 1;
-}
-
-/* Subtle glassmorphism */
-.studio-glass {
-  background: rgba(21, 31, 48, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* Accessible high-contrast keyboard focus indicators */
+:focus-visible {
+  outline: 2px solid #3B82F6 !important;
+  outline-offset: 2px !important;
 }

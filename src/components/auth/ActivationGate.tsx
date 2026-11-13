@@ -52,25 +52,22 @@ export const ActivationGate: React.FC<ActivationGateProps> = ({ onSuccess }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#080D18] flex items-center justify-center p-4 overflow-y-auto">
-      {/* Background ambient glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#7357F5]/15 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="w-full max-w-md bg-[#101827] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
+    <div className="fixed inset-0 z-50 bg-[#0B1120] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="w-full max-w-md bg-[#0F172A] border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
         {/* Header Icon & Brand */}
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#7357F5] to-[#3984FF] flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/25 ring-4 ring-white/5">
+          <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-sm">
             {isSuccess ? (
-              <CheckCircle2 className="w-8 h-8 text-white animate-bounce" />
+              <CheckCircle2 className="w-7 h-7 text-white" />
             ) : (
-              <Lock className="w-8 h-8 text-white" />
+              <Lock className="w-7 h-7 text-white" />
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-white tracking-tight">
               Activate Vocal Remover
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-slate-300 mt-1">
               Enter your 16-digit license code to unlock and use the application.
             </p>
           </div>
@@ -79,8 +76,8 @@ export const ActivationGate: React.FC<ActivationGateProps> = ({ onSuccess }) => 
         {/* Activation Form */}
         <form onSubmit={handleActivate} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5 text-[#7357F5]" />
+            <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5 text-blue-400" />
               <span>16-Digit License Code</span>
             </label>
             <div className="relative">
@@ -92,14 +89,14 @@ export const ActivationGate: React.FC<ActivationGateProps> = ({ onSuccess }) => 
                 maxLength={19}
                 autoFocus
                 disabled={isActivating || isSuccess}
-                className="w-full px-4 py-3.5 rounded-xl bg-[#151F30] border border-white/15 text-white font-mono text-center text-base sm:text-lg tracking-widest placeholder:text-slate-600 focus:outline-hidden focus:border-[#7357F5] focus:ring-2 focus:ring-[#7357F5]/25 transition-all"
+                className="w-full px-4 py-3.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-center text-base sm:text-lg tracking-widest placeholder:text-slate-500 focus:outline-hidden focus:border-blue-500 transition-colors"
               />
             </div>
           </div>
 
           {/* Error Message */}
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2 animate-in fade-in">
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -107,7 +104,7 @@ export const ActivationGate: React.FC<ActivationGateProps> = ({ onSuccess }) => 
 
           {/* Success Message */}
           {isSuccess && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
               <span>License verified! Launching software...</span>
             </div>
@@ -117,7 +114,7 @@ export const ActivationGate: React.FC<ActivationGateProps> = ({ onSuccess }) => 
           <button
             type="submit"
             disabled={isActivating || isSuccess || code.replace(/-/g, '').length < 16}
-            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#7357F5] to-[#5b40e6] hover:from-[#6345ec] hover:to-[#4e32d9] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4" />
             <span>{isActivating ? 'Verifying Code...' : 'Activate Software'}</span>
@@ -126,8 +123,8 @@ export const ActivationGate: React.FC<ActivationGateProps> = ({ onSuccess }) => 
 
         {/* Divider */}
         <div className="relative flex items-center justify-center">
-          <div className="border-t border-white/10 w-full" />
-          <span className="bg-[#101827] px-3 text-[11px] text-slate-500 uppercase tracking-wider">
+          <div className="border-t border-slate-800 w-full" />
+          <span className="bg-[#0F172A] px-3 text-[11px] text-slate-400 uppercase tracking-wider">
             Need a license?
           </span>
         </div>
@@ -150,7 +147,7 @@ export const ActivationGate: React.FC<ActivationGateProps> = ({ onSuccess }) => 
           >
             <MessageCircle className="w-4 h-4 fill-current group-hover:scale-110 transition-transform flex-shrink-0" />
             <span>WhatsApp to 9743247790</span>
-            <ExternalLink className="w-3.5 h-3.5 opacity-80 group-hover:opacity-100 transition-opacity" />
+            <ExternalLink className="w-3.5 h-3.5 text-white" />
           </a>
         </div>
 

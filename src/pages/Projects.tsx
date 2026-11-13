@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { useProjectStore } from '../store/useProjectStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { StatusBadge } from '../components/common/StatusBadge';
@@ -8,6 +9,7 @@ import { Modal } from '../components/common/Modal';
 import { AudioPlayer } from '../components/audio/AudioPlayer';
 import { getAudioBlob } from '../services/db';
 import { formatDuration, formatFileSize } from '../services/audioMetadata';
+import { sanitizeSearch } from '../utils/sanitize';
 import type { Project } from '../types';
 import {
   FolderKanban,
@@ -26,6 +28,11 @@ import {
 } from 'lucide-react';
 
 export const Projects: React.FC = () => {
+  usePageMeta(
+    'My Songs - Processed Audio Stems & Separations | Vocal Remover',
+    'Browse and manage your separated vocal and instrumental songs.'
+  );
+
   const navigate = useNavigate();
   const { projects, deleteProject, searchQuery, setSearchQuery, statusFilter, setStatusFilter } =
     useProjectStore();
@@ -132,17 +139,18 @@ export const Projects: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <FolderKanban className="w-6 h-6 text-[#7357F5]" />
-            <span>My Projects</span>
+            <FolderKanban className="w-6 h-6 text-blue-400" />
+            <span>My Songs</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">
             Browse stored project metadata, inspect audio details, and preview tracks.
           </p>
         </div>
 
         <button
+          type="button"
           onClick={() => navigate('/new')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#7357F5] to-[#3984FF] text-white text-xs font-semibold shadow-md hover:shadow-indigo-500/25 active:scale-95 transition-all w-fit cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-colors w-fit cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
           <span>New Separation</span>
@@ -151,15 +159,16 @@ export const Projects: React.FC = () => {
 
       {/* Floating Audio Preview bar if project selected */}
       {playingProject && (
-        <div className="relative rounded-2xl p-4 bg-[#101827] border border-[#7357F5]/40 shadow-2xl animate-in fade-in duration-200">
+        <div className="relative rounded-2xl p-4 bg-[#0F172A] border border-slate-700 shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-[#7357F5] flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-blue-400 flex items-center gap-1.5">
               <Play className="w-3.5 h-3.5 fill-current" />
               <span>Playing Track: {playingProject.name}</span>
             </span>
             <button
+              type="button"
               onClick={() => setPlayingProject(null)}
-              className="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/5"
+              className="text-xs text-slate-300 hover:text-white px-2 py-0.5 rounded bg-slate-800"
             >
               Close Player
             </button>
@@ -185,27 +194,29 @@ export const Projects: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(sanitizeSearch(e.target.value))}
             placeholder="Search by project name or file..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#151F30] border border-white/10 text-white text-xs placeholder:text-slate-500 focus:outline-hidden focus:border-[#7357F5] transition-colors"
+            maxLength={60}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-hidden focus:border-blue-500 transition-colors"
           />
         </div>
 
         {/* Filter buttons */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#151F30] border border-white/10 self-start md:self-auto overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 self-start md:self-auto overflow-x-auto">
           {[
             { id: 'all', label: 'All Projects' },
             { id: 'completed', label: 'Completed' },
-            { id: 'queued', label: 'Queued (Stage 2)' },
+            { id: 'queued', label: 'Processing' },
             { id: 'draft', label: 'Drafts' },
           ].map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 statusFilter === tab.id
-                  ? 'bg-gradient-to-r from-[#7357F5] to-[#3984FF] text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
             >
               {tab.label}
@@ -241,17 +252,17 @@ export const Projects: React.FC = () => {
             return (
               <div
                 key={project.id}
-                className={`rounded-2xl border p-5 flex flex-col justify-between transition-all duration-200 ${
+                className={`rounded-2xl border p-5 flex flex-col justify-between transition-colors duration-150 ${
                   isPlayingThis
-                    ? 'bg-[#18253d] border-[#7357F5] shadow-[0_0_20px_-3px_rgba(115,87,245,0.3)] ring-1 ring-[#7357F5]/50'
-                    : 'bg-[#151F30] border-white/10 hover:border-white/20 hover:bg-[#182338]'
+                    ? 'bg-slate-900 border-blue-500 shadow-md ring-1 ring-blue-500/50'
+                    : 'bg-[#0F172A] border-slate-800 hover:border-slate-700 hover:bg-slate-900/60'
                 }`}
               >
                 <div>
                   {/* Card Header */}
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7357F5]/20 to-[#3984FF]/20 border border-white/10 flex items-center justify-center flex-shrink-0">
-                      <FileAudio className="w-5 h-5 text-[#7357F5]" />
+                    <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <FileAudio className="w-5 h-5" />
                     </div>
                     <StatusBadge status={project.status} />
                   </div>
@@ -260,19 +271,19 @@ export const Projects: React.FC = () => {
                   <h3 className="text-base font-semibold text-white tracking-tight truncate" title={project.name}>
                     {project.name}
                   </h3>
-                  <p className="text-xs text-slate-400 truncate mt-0.5" title={project.originalFileName}>
+                  <p className="text-xs text-slate-300 truncate mt-0.5" title={project.originalFileName}>
                     {project.originalFileName}
                   </p>
 
                   {/* Mode & Specs Pill */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-3 text-[11px]">
-                    <span className="px-2 py-0.5 rounded-md bg-[#101827] text-slate-300 border border-white/5 uppercase font-mono">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 uppercase font-mono">
                       {project.metadata.format}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#7357F5]/10 text-[#7357F5] border border-[#7357F5]/30">
+                    <span className="px-2 py-0.5 rounded-md bg-blue-600/15 text-blue-300 border border-blue-500/30">
                       {project.config.mode === 'multi-stem' ? '4-Stem' : '2-Stem'}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-white/5 text-slate-400 border border-white/5">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800">
                       {project.config.outputFormat.toUpperCase()}
                     </span>
                   </div>
@@ -334,8 +345,9 @@ export const Projects: React.FC = () => {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => navigate(`/studio/${project.id}`)}
-                      className="px-3 py-1.5 rounded-xl bg-[#7357F5]/20 hover:bg-[#7357F5]/30 text-[#7357F5] border border-[#7357F5]/30 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 border border-blue-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       title="Open in Multitrack Studio"
                     >
                       <Sliders className="w-3.5 h-3.5" />
@@ -399,14 +411,16 @@ export const Projects: React.FC = () => {
 
           <div className="flex justify-end gap-2.5 pt-2">
             <button
+              type="button"
               onClick={() => setProjectToDelete(null)}
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium border border-white/10 transition-colors"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-medium border border-slate-700 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleDeleteConfirm}
-              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-medium shadow-md transition-colors"
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-medium shadow-sm transition-colors cursor-pointer"
             >
               Confirm Delete
             </button>
@@ -424,64 +438,64 @@ export const Projects: React.FC = () => {
       >
         {detailProject && (
           <div className="space-y-4 text-xs">
-            <div className="bg-[#101827] rounded-xl p-4 border border-white/10 space-y-2.5">
-              <div className="flex justify-between py-1 border-b border-white/5">
+            <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2.5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Project ID:</span>
                 <span className="font-mono text-white">{detailProject.id}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Original File Name:</span>
                 <span className="font-mono text-white truncate max-w-xs">{detailProject.originalFileName}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Status:</span>
                 <StatusBadge status={detailProject.status} />
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Processing Mode:</span>
-                <span className="font-mono text-[#7357F5]">{detailProject.config.mode}</span>
+                <span className="font-mono text-blue-400">{detailProject.config.mode}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Sample Rate:</span>
                 <span className="font-mono text-white">{detailProject.metadata.sampleRate} Hz</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Audio Channels:</span>
                 <span className="font-mono text-white">{detailProject.metadata.channels} (Stereo)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Duration:</span>
                 <span className="font-mono text-white">{formatDuration(detailProject.duration)}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">File Size:</span>
                 <span className="font-mono text-white">{formatFileSize(detailProject.fileSize)}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Quality Preset:</span>
                 <span className="font-mono text-white capitalize">{detailProject.config.quality}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
+              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Target Output:</span>
                 <span className="font-mono text-white uppercase">{detailProject.config.outputFormat}</span>
               </div>
               {detailProject.backendJobId && (
                 <div className="flex justify-between py-1">
                   <span className="text-slate-400">Task ID:</span>
-                  <span className="font-mono text-[#16C784]">{detailProject.backendJobId}</span>
+                  <span className="font-mono text-emerald-400">{detailProject.backendJobId}</span>
                 </div>
               )}
             </div>
 
             {/* Separated Stems in Detail Modal */}
             {detailProject.stems && detailProject.stems.length > 0 && (
-              <div className="bg-[#101827] rounded-xl p-4 border border-white/10 space-y-2">
+              <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2">
                 <span className="text-xs font-semibold text-white">Separated Stems</span>
                 <div className="space-y-1.5 pt-1">
                   {detailProject.stems.map((stem) => (
                     <div
                       key={stem.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 text-xs"
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-800/60 border border-slate-700/60 text-xs"
                     >
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-white capitalize">{stem.label}</span>
@@ -495,7 +509,7 @@ export const Projects: React.FC = () => {
                         <a
                           href={stem.url}
                           download={`${detailProject.name}_${stem.type}.wav`}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#7357F5]/20 hover:bg-[#7357F5]/30 text-[#7357F5] font-semibold text-[11px] transition-colors"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 font-semibold text-[11px] transition-colors"
                         >
                           <Download className="w-3 h-3" />
                           <span>Download WAV</span>
@@ -511,15 +525,17 @@ export const Projects: React.FC = () => {
 
             <div className="flex justify-end gap-2 pt-2">
               <button
+                type="button"
                 onClick={() => handleExportMetadata(detailProject)}
-                className="px-4 py-2 rounded-xl bg-[#7357F5] hover:bg-[#6345ec] text-white font-medium flex items-center gap-1.5 transition-colors"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export JSON</span>
               </button>
               <button
+                type="button"
                 onClick={() => setDetailProject(null)}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium border border-white/10 transition-colors"
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium border border-slate-700 transition-colors cursor-pointer"
               >
                 Close
               </button>

@@ -35,7 +35,7 @@ export const StemTrackStrip: React.FC<StemTrackStripProps> = ({
   const getStemIcon = (name: string) => {
     switch (name.toLowerCase()) {
       case 'vocals':
-        return <Mic2 className="w-4 h-4 text-[#7357F5]" />;
+        return <Mic2 className="w-4 h-4 text-blue-400" />;
       case 'drums':
         return <Drum className="w-4 h-4 text-[#16C784]" />;
       case 'bass':
@@ -51,7 +51,7 @@ export const StemTrackStrip: React.FC<StemTrackStripProps> = ({
   const getBorderColor = (name: string) => {
     switch (name.toLowerCase()) {
       case 'vocals':
-        return 'border-[#7357F5]/30 focus-within:border-[#7357F5]';
+        return 'border-blue-500/30 focus-within:border-blue-500';
       case 'drums':
         return 'border-[#16C784]/30 focus-within:border-[#16C784]';
       case 'bass':
@@ -87,7 +87,7 @@ export const StemTrackStrip: React.FC<StemTrackStripProps> = ({
             <div className="flex items-center gap-1.5 mt-0.5">
               {track.isLoading ? (
                 <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                  <Loader2 className="w-3 h-3 animate-spin text-[#7357F5]" />
+                  <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
                   <span>Loading stem...</span>
                 </span>
               ) : track.error ? (
@@ -147,7 +147,7 @@ export const StemTrackStrip: React.FC<StemTrackStripProps> = ({
           disabled={disabled || track.isLoading || Boolean(track.error)}
           value={track.volume}
           onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-          className="w-full accent-[#7357F5] h-1.5 bg-white/10 rounded-lg cursor-pointer disabled:opacity-50"
+          className="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer disabled:opacity-50"
         />
       </div>
 

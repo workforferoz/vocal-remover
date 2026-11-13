@@ -100,7 +100,7 @@ export const StudioTimeline: React.FC<StudioTimelineProps> = ({
 
         {/* Played Region Highlight */}
         <div
-          className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#7357F5]/30 to-[#3984FF]/40 border-r-2 border-[#3984FF] pointer-events-none transition-all duration-75"
+          className="absolute left-0 top-0 bottom-0 bg-blue-600/25 border-r-2 border-blue-400 pointer-events-none transition-all duration-75"
           style={{ width: `${Math.min(Math.max(progressPercent, 0), 100)}%` }}
         />
 

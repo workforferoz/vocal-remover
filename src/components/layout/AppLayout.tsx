@@ -1,56 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { NotificationContainer } from '../common/NotificationContainer';
-import { ActivationGate } from '../auth/ActivationGate';
-import { isSoftwareActivated } from '../../services/licenseService';
+import { CookieConsentBanner } from '../common/CookieConsentBanner';
+import { BuyTokensModal } from '../tokens/BuyTokensModal';
+import { AuthModal } from '../auth/AuthModal';
+import { useTokenStore } from '../../store/useTokenStore';
+import { useUserStore } from '../../store/useUserStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useProjectStore } from '../../store/useProjectStore';
 import { useJobStore } from '../../store/useJobStore';
-import { Loader2 } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
-  const [isLicensed, setIsLicensed] = useState<boolean | null>(null);
+  const { init: initTokens } = useTokenStore();
+  const { init: initUser } = useUserStore();
   const { initSettings, checkEngine } = useSettingsStore();
   const { loadProjects } = useProjectStore();
   const { loadJobs } = useJobStore();
 
   useEffect(() => {
-    // Check license activation status
-    isSoftwareActivated().then((activated) => {
-      setIsLicensed(activated);
-    });
+    // Initialize user session & user tokens
+    initUser();
+    initTokens();
 
     // Initial data hydration from IndexedDB
     initSettings();
     loadProjects();
     loadJobs();
     checkEngine();
-  }, [initSettings, loadProjects, loadJobs, checkEngine]);
-
-  // Loading state while checking license on startup
-  if (isLicensed === null) {
-    return (
-      <div className="min-h-screen bg-[#080D18] flex items-center justify-center text-slate-400 gap-3">
-        <Loader2 className="w-7 h-7 text-[#7357F5] animate-spin" />
-        <span className="text-xs font-mono tracking-wider uppercase">Verifying license...</span>
-      </div>
-    );
-  }
-
-  // If not activated with valid 16-digit code, show Activation Gate
-  if (!isLicensed) {
-    return (
-      <>
-        <ActivationGate onSuccess={() => setIsLicensed(true)} />
-        <NotificationContainer />
-      </>
-    );
-  }
+  }, [initUser, initTokens, initSettings, loadProjects, loadJobs, checkEngine]);
 
   return (
-    <div className="min-h-screen bg-[#080D18] text-[#F8FAFC] flex flex-col justify-between">
+    <div className="min-h-screen bg-[#0B1120] text-slate-100 flex flex-col justify-between overflow-x-hidden">
       {/* Header bar */}
       <Header />
 
@@ -62,8 +44,17 @@ export const AppLayout: React.FC = () => {
       {/* Footer with feature cards */}
       <Footer />
 
+      {/* Global Token Recharge & Voucher Modal */}
+      <BuyTokensModal />
+
+      {/* Global User Authentication (Login/Register) Modal */}
+      <AuthModal />
+
       {/* Global toast notification system */}
       <NotificationContainer />
+
+      {/* Cookie & Local Storage Consent Banner */}
+      <CookieConsentBanner />
     </div>
   );
 };

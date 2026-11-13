@@ -151,8 +151,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       {/* Header track info */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7357F5]/20 to-[#3984FF]/20 border border-white/10 flex items-center justify-center flex-shrink-0">
-            <Disc3 className={`w-5 h-5 text-[#7357F5] ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
+          <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-400 flex items-center justify-center flex-shrink-0">
+            <Disc3 className={`w-5 h-5 ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-white truncate">{fileName || 'Audio Track Preview'}</p>
@@ -170,7 +170,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             onClick={() => setIsLooping(!isLooping)}
             className={`p-1.5 rounded-lg text-xs font-medium border transition-colors ${
               isLooping
-                ? 'bg-[#7357F5]/20 text-[#7357F5] border-[#7357F5]/40'
+                ? 'bg-blue-600/20 text-blue-400 border-blue-500/40'
                 : 'text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
             }`}
             title="Loop playback"
@@ -214,9 +214,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={togglePlay}
             disabled={!activeSrc}
-            className="w-11 h-11 rounded-xl bg-gradient-to-r from-[#7357F5] to-[#3984FF] text-white flex items-center justify-center shadow-lg hover:shadow-indigo-500/25 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-11 h-11 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
@@ -252,7 +253,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
               setVolume(parseFloat(e.target.value));
               if (isMuted) setIsMuted(false);
             }}
-            className="w-20 sm:w-24 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#7357F5]"
+            className="w-20 sm:w-24 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             aria-label="Volume level"
           />
         </div>

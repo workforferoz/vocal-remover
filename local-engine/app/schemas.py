@@ -80,3 +80,12 @@ class JobResultsResponse(BaseModel):
     model: str
     stems: dict[str, StemResult]
 
+class YouTubeExtractRequest(BaseModel):
+    url: str
+
+class YouTubeInfoResponse(BaseModel):
+    title: str
+    duration_seconds: Optional[int] = None
+    uploader: Optional[str] = None
+    thumbnail: Optional[str] = None
+

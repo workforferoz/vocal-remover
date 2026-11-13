@@ -1,4 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { sanitizeText, sanitizeFilename } from '../utils/sanitize';
 import type { Project, ProcessingJob, AppSettings } from '../types';
 
 interface VocalStudioDB extends DBSchema {
@@ -71,8 +72,13 @@ export async function getProjectById(id: string): Promise<Project | undefined> {
 }
 
 export async function saveProject(project: Project): Promise<void> {
+  const safeProject: Project = {
+    ...project,
+    name: sanitizeText(project.name, 100),
+    originalFileName: sanitizeFilename(project.originalFileName),
+  };
   const db = await getDB();
-  await db.put('projects', project);
+  await db.put('projects', safeProject);
 }
 
 export async function deleteProject(id: string): Promise<void> {
@@ -115,12 +121,15 @@ export async function clearAllJobs(): Promise<void> {
 
 // Audio Blob Cache (Optional persistence for audio previews)
 export async function saveAudioBlob(id: string, blob: Blob, fileName: string, mimeType: string): Promise<void> {
+  const cleanId = sanitizeText(id, 64);
+  const cleanName = sanitizeFilename(fileName);
+  const cleanMime = sanitizeText(mimeType, 50);
   const db = await getDB();
   await db.put('audioFiles', {
-    id,
+    id: cleanId,
     blob,
-    mimeType,
-    fileName,
+    mimeType: cleanMime,
+    fileName: cleanName,
     updatedAt: Date.now(),
   });
 }

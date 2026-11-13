@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { usePageMeta } from '../../hooks/usePageMeta';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useNotificationStore } from '../../store/useNotificationStore';
 import { useProjectStore } from '../../store/useProjectStore';
+import { useTokenStore } from '../../store/useTokenStore';
+import { useUserStore } from '../../store/useUserStore';
 import { localEngineService } from '../../services/localEngine';
 import { saveAudioBlob } from '../../services/db';
 import { decodeAudioFile } from '../../services/dsp/audioDecoder';
@@ -9,6 +12,8 @@ import { applyVocalReductionAsync } from '../../services/dsp/vocalReducer';
 import { encodeWavBlob, downloadWavFile } from '../../services/dsp/wavEncoder';
 import { formatDuration } from '../../services/audioMetadata';
 import { FileDropzone } from '../upload/FileDropzone';
+import { YouTubeLinkModal, YouTubeIcon } from '../upload/YouTubeLinkModal';
+import { isValidYouTubeUrl, downloadYouTubeAudio } from '../../services/youtubeService';
 import type { Project } from '../../types';
 import {
   Music,
@@ -21,6 +26,8 @@ import {
   CheckCircle2,
   RefreshCw,
   AlertCircle,
+  Coins,
+  Sparkles,
 } from 'lucide-react';
 
 interface SimpleVocalRemoverProps {
@@ -28,9 +35,27 @@ interface SimpleVocalRemoverProps {
 }
 
 export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialFile }) => {
+  usePageMeta(
+    'Vocal Remover - Extract Karaoke & Separate Stems | Ayesha Tech Studio',
+    'Extract clean instrumental karaoke tracks and remove vocals from any song with AI.'
+  );
+
   const { engineHealth, checkEngine } = useSettingsStore();
   const { showNotification } = useNotificationStore();
   const { createProject } = useProjectStore();
+  const {
+    balance: tokenBalance,
+    isUnlimited,
+    canConvert,
+    consumeToken,
+    openModal: openTokenModal,
+  } = useTokenStore();
+  const {
+    isAuthenticated,
+    openAuthModal,
+    pendingFile,
+    setPendingFile,
+  } = useUserStore();
 
   // App State
   const [file, setFile] = useState<File | null>(initialFile || null);
@@ -53,6 +78,11 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
   const [vocalsVolume, setVocalsVolume] = useState<number>(1.0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
+
+  // YouTube Audio Extraction State
+  const [isYouTubeModalOpen, setIsYouTubeModalOpen] = useState<boolean>(false);
+  const [inlineYouTubeUrl, setInlineYouTubeUrl] = useState<string>('');
+  const [isInlineExtracting, setIsInlineExtracting] = useState<boolean>(false);
 
   // Audio Element Refs
   const instAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -213,6 +243,38 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
   // Execute Vocal Removal Process
   const processSong = useCallback(
     async (audioFile: File) => {
+      // 1. Verify user authentication (must be logged in to account)
+      if (!isAuthenticated) {
+        openAuthModal('login', audioFile);
+        showNotification({
+          type: 'info',
+          title: 'Sign In Required',
+          message: 'Please sign in or create an account to process this song.',
+        });
+        return;
+      }
+
+      // 2. Verify token balance
+      if (!canConvert()) {
+        openTokenModal();
+        showNotification({
+          type: 'warning',
+          title: '0 Tokens Left',
+          message: 'You have used all available tokens. Please activate your token code to continue.',
+        });
+        return;
+      }
+
+      // 2. Consume 1 token for this conversion (or bypass if unlimited)
+      const tokenResult = consumeToken(audioFile.name);
+      if (!isUnlimited) {
+        showNotification({
+          type: 'info',
+          title: '1 Token Used',
+          message: tokenResult.message,
+        });
+      }
+
       setFile(audioFile);
       setStatus('processing');
       setProgress(5);
@@ -351,8 +413,136 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
       // 2. If Demucs engine is offline, run instant in-browser DSP vocal reduction
       runBrowserDSP(audioFile);
     },
-    [engineHealth.connected, engineHealth.device, duration, createProject, showNotification, runBrowserDSP]
+    [
+      isAuthenticated,
+      isUnlimited,
+      openAuthModal,
+      canConvert,
+      openTokenModal,
+      consumeToken,
+      engineHealth.connected,
+      engineHealth.device,
+      duration,
+      createProject,
+      showNotification,
+      runBrowserDSP,
+    ]
   );
+
+  // Intercept file chooser open to require login
+  const handleBeforeOpen = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      showNotification({
+        type: 'info',
+        title: 'Sign In Required',
+        message: 'Please sign in or create an account to upload songs.',
+      });
+      return false;
+    }
+    return true;
+  }, [isAuthenticated, openAuthModal, showNotification]);
+
+  // Intercept drag-and-drop to require login and preserve dropped file
+  const handleBeforeDrop = useCallback(
+    (droppedFile: File) => {
+      if (!isAuthenticated) {
+        openAuthModal('login', droppedFile);
+        showNotification({
+          type: 'info',
+          title: 'Sign In Required',
+          message: 'Please sign in or create an account to process this song.',
+        });
+        return false;
+      }
+      return true;
+    },
+    [isAuthenticated, openAuthModal, showNotification]
+  );
+
+  // Open YouTube Modal with authentication check
+  const handleYouTubeClick = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      showNotification({
+        type: 'info',
+        title: 'Sign In Required',
+        message: 'Please sign in or create an account to process YouTube songs.',
+      });
+      return;
+    }
+    setIsYouTubeModalOpen(true);
+  }, [isAuthenticated, openAuthModal, showNotification]);
+
+  // Handle quick inline YouTube URL submission
+  const handleInlineYouTubeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanUrl = inlineYouTubeUrl.trim();
+    if (!cleanUrl) return;
+
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      showNotification({
+        type: 'info',
+        title: 'Sign In Required',
+        message: 'Please sign in or create an account to process YouTube songs.',
+      });
+      return;
+    }
+
+    if (!isValidYouTubeUrl(cleanUrl)) {
+      showNotification({
+        type: 'error',
+        title: 'Invalid YouTube URL',
+        message: 'Please paste a valid YouTube link (e.g. https://www.youtube.com/watch?v=... or https://youtu.be/...)',
+      });
+      return;
+    }
+
+    if (!canConvert()) {
+      openTokenModal();
+      showNotification({
+        type: 'warning',
+        title: '0 Tokens Left',
+        message: 'You have used all available tokens. Please activate your token code to continue.',
+      });
+      return;
+    }
+
+    setIsInlineExtracting(true);
+    showNotification({
+      type: 'info',
+      title: 'Fetching YouTube Audio',
+      message: 'Downloading audio stream from YouTube...',
+    });
+
+    try {
+      const downloadedFile = await downloadYouTubeAudio(cleanUrl);
+      setInlineYouTubeUrl('');
+      setIsInlineExtracting(false);
+      await processSong(downloadedFile);
+    } catch (err: unknown) {
+      setIsInlineExtracting(false);
+      const msg = err instanceof Error ? err.message : 'Failed to download YouTube audio.';
+      showNotification({
+        type: 'error',
+        title: 'YouTube Download Error',
+        message: msg,
+      });
+    }
+  };
+
+  // When user successfully signs in, resume processing any pending file
+  useEffect(() => {
+    if (isAuthenticated && pendingFile && status === 'idle') {
+      const fileToProcess = pendingFile;
+      setPendingFile(null);
+      const timer = setTimeout(() => {
+        processSong(fileToProcess);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, pendingFile, status, processSong, setPendingFile]);
 
   // Playback Control Handlers
   const togglePlayInstrumental = () => {
@@ -500,63 +690,136 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
       {/* 1. IDLE STATE: Upload Hero Dropzone */}
       {status === 'idle' && (
         <div className="space-y-6">
-          <div className="text-center space-y-2 py-4">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center justify-center gap-3">
-              <span className="p-2 rounded-2xl bg-gradient-to-tr from-[#7357F5] to-[#3984FF] shadow-lg shadow-indigo-500/25">
-                <Music className="w-7 h-7 text-white" />
+          <div className="text-center space-y-3 py-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center justify-center gap-3">
+              <span className="p-2 rounded-xl bg-blue-600 text-white shadow-sm">
+                <Music className="w-6 h-6" />
               </span>
               <span>Vocal Remover</span>
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto">
+            <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed">
               Extract the <strong>instrumental (karaoke)</strong> and remove vocals from any song.
-              100% free, fast, and high quality.
+              Fast, clean, and high quality audio.
             </p>
+
+            {/* Token Status Badge */}
+            <div className="pt-1 flex justify-center">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 shadow-xs">
+                <Coins className="w-3.5 h-3.5 text-blue-400" />
+                {isUnlimited ? (
+                  <>
+                    <span className="text-emerald-400 font-bold">Unlimited Conversions Active</span>
+                    <span className="text-slate-600">&bull;</span>
+                    <span className="text-slate-300">No Limit</span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      Available: <strong className="text-white font-bold">{tokenBalance} Tokens</strong>
+                    </span>
+                    <span className="text-slate-600">&bull;</span>
+                    <span className="text-emerald-400 font-semibold">1 Conversion = 1 Token</span>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={openTokenModal}
+                  className="ml-1 text-[11px] font-bold text-blue-400 hover:text-white underline cursor-pointer"
+                >
+                  {isUnlimited ? 'Tokens' : 'Buy More'}
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Big Audio Dropzone */}
-          <div className="p-2 sm:p-4 rounded-3xl bg-[#151F30]/80 border border-white/10 shadow-2xl backdrop-blur-md">
-            <FileDropzone onFileAccepted={(f) => processSong(f)} />
+          {/* Big Audio Dropzone & YouTube Option */}
+          <div className="p-2 sm:p-4 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-3.5">
+            <FileDropzone
+              onFileAccepted={(f) => processSong(f)}
+              onBeforeOpen={handleBeforeOpen}
+              onBeforeDrop={handleBeforeDrop}
+              onYouTubeClick={handleYouTubeClick}
+            />
+
+            {/* Quick Inline YouTube Link Bar */}
+            <form
+              onSubmit={handleInlineYouTubeSubmit}
+              className="p-3 sm:p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-center gap-2.5"
+            >
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-red-600/20 text-red-500 flex items-center justify-center">
+                  <YouTubeIcon className="w-3.5 h-3.5 text-red-500" />
+                </div>
+                <span className="hidden sm:inline">YouTube Link:</span>
+              </div>
+              <input
+                type="url"
+                value={inlineYouTubeUrl}
+                onChange={(e) => setInlineYouTubeUrl(e.target.value)}
+                disabled={isInlineExtracting}
+                placeholder="Paste YouTube song link (e.g. https://www.youtube.com/watch?v=...)"
+                className="flex-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500 transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={isInlineExtracting || !inlineYouTubeUrl.trim()}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+              >
+                {isInlineExtracting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Extracting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Get Result</span>
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}
 
       {/* 2. PROCESSING STATE: Clear Progress Bar */}
       {status === 'processing' && (
-        <div className="p-8 sm:p-12 rounded-3xl bg-[#151F30] border border-white/10 shadow-2xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#7357F5] to-[#3984FF] flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/30 animate-pulse">
-            <RefreshCw className="w-8 h-8 text-white animate-spin" />
+        <div className="p-8 sm:p-12 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl text-center space-y-6">
+          <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-sm animate-pulse">
+            <RefreshCw className="w-7 h-7 text-white animate-spin" />
           </div>
 
           <div className="space-y-2">
             <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Removing Vocals from Song...
+              Removing Vocals from Song
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto truncate">
+            <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto truncate font-mono">
               {file?.name}
             </p>
           </div>
 
           {/* Progress Bar */}
           <div className="max-w-md mx-auto space-y-2">
-            <div className="w-full h-3 rounded-full bg-[#101827] border border-white/10 overflow-hidden p-0.5">
+            <div className="w-full h-3 rounded-full bg-slate-900 border border-slate-800 overflow-hidden p-0.5">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#7357F5] via-[#5b40e6] to-[#16C784] transition-all duration-300 ease-out"
+                className="h-full rounded-full bg-blue-600 transition-all duration-300 ease-out"
                 style={{ width: `${Math.max(progress, 8)}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-mono">
               <span>{stageText}</span>
               <span className="font-bold text-white">{progress}%</span>
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
             Extracting vocal and instrumental audio tracks...
           </p>
 
           <button
+            type="button"
             onClick={handleReset}
-            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -565,15 +828,16 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
 
       {/* 3. ERROR STATE */}
       {status === 'error' && (
-        <div className="p-8 rounded-3xl bg-[#151F30] border border-rose-500/30 shadow-2xl text-center space-y-4">
+        <div className="p-8 rounded-3xl bg-[#0F172A] border border-rose-500/30 shadow-xl text-center space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
             <AlertCircle className="w-6 h-6" />
           </div>
           <h3 className="text-lg font-bold text-white">Could Not Remove Vocals</h3>
           <p className="text-xs text-rose-300 max-w-md mx-auto">{errorMessage}</p>
           <button
+            type="button"
             onClick={handleReset}
-            className="px-5 py-2.5 rounded-xl bg-[#7357F5] hover:bg-[#6345ec] text-white text-xs font-bold transition-all cursor-pointer shadow-md inline-flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm inline-flex items-center gap-2"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Try Another Song</span>
@@ -585,23 +849,24 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
       {status === 'done' && (
         <div className="space-y-6">
           {/* Header Bar */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-[#151F30] border border-white/10 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#16C784]" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                  Vocals Removed Successfully!
+                  Vocals Removed Successfully
                 </h2>
               </div>
-              <p className="text-xs text-slate-400 mt-1 truncate max-w-lg">
-                Track: <span className="text-white font-medium">{file?.name}</span> • Duration:{' '}
-                <span className="text-slate-300 font-mono">{formatDuration(duration || 0)}</span>
+              <p className="text-xs text-slate-300 mt-1 truncate max-w-lg">
+                Track: <span className="text-white font-medium">{file?.name}</span> - Duration:{' '}
+                <span className="text-slate-200 font-mono">{formatDuration(duration || 0)}</span>
               </p>
             </div>
 
             <button
+              type="button"
               onClick={handleReset}
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white border border-white/10 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer w-full sm:w-auto justify-center"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer w-full sm:w-auto justify-center"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Process Another Song</span>
@@ -609,21 +874,22 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           </div>
 
           {/* Master Scrubber Timeline */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#101827] border border-white/10 space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#0F172A] border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-mono">
               <span>{formatDuration(currentTime)}</span>
               <button
+                type="button"
                 onClick={togglePlayBoth}
-                className="px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 {isPlayingBoth ? (
                   <>
-                    <Pause className="w-3.5 h-3.5 text-[#16C784]" />
+                    <Pause className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Pause Both</span>
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 text-[#7357F5] fill-current" />
+                    <Play className="w-3.5 h-3.5 text-blue-400 fill-current" />
                     <span>Play Both (Preview Mix)</span>
                   </>
                 )}
@@ -638,37 +904,38 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               step="0.1"
               value={currentTime}
               onChange={(e) => handleSeek(parseFloat(e.target.value))}
-              className="w-full accent-[#7357F5] h-2 bg-white/10 rounded-lg cursor-pointer"
+              className="w-full accent-blue-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
             />
           </div>
 
           {/* TWO MAIN CARDS: 1. INSTRUMENTAL & 2. VOCALS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 1. INSTRUMENTAL CARD */}
-            <div className="p-6 rounded-3xl bg-gradient-to-b from-[#101827] to-[#151F30] border-2 border-[#16C784]/40 hover:border-[#16C784] shadow-xl transition-all space-y-5 flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-2xl bg-[#0F172A] border-2 border-emerald-500/40 hover:border-emerald-500 shadow-xl transition-colors space-y-5 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#16C784]/20 border border-[#16C784]/40 flex items-center justify-center text-[#16C784] shadow-md">
-                      <Music className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-sm">
+                      <Music className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-extrabold text-white">Instrumental</h3>
-                      <p className="text-xs text-[#16C784] font-medium">Music only • Vocals removed</p>
+                      <h3 className="text-base sm:text-lg font-bold text-white">Instrumental</h3>
+                      <p className="text-xs text-emerald-400 font-medium">Music only - Vocals removed</p>
                     </div>
                   </div>
 
-                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#16C784]/15 text-[#16C784] font-bold border border-[#16C784]/30">
-                    Karaoke / Music
+                  <span className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30">
+                    Karaoke
                   </span>
                 </div>
 
                 {/* Player Row */}
-                <div className="p-3.5 rounded-2xl bg-[#080D18]/80 border border-white/5 flex items-center gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={togglePlayInstrumental}
-                    className="w-11 h-11 rounded-xl bg-[#16C784] hover:bg-[#13b074] active:scale-95 text-slate-950 flex items-center justify-center font-bold transition-all shadow-md cursor-pointer flex-shrink-0"
-                    aria-label={isPlayingInst ? 'Pause' : 'Play Instrumental'}
+                    className="w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-center font-bold transition-colors shadow-sm cursor-pointer flex-shrink-0"
+                    aria-label={isPlayingInst ? 'Pause Instrumental' : 'Play Instrumental'}
                   >
                     {isPlayingInst ? (
                       <Pause className="w-5 h-5 fill-current" />
@@ -678,7 +945,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                   </button>
 
                   <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between text-[11px] text-slate-300">
                       <span className="flex items-center gap-1">
                         <Volume2 className="w-3.5 h-3.5" />
                         <span>Volume</span>
@@ -696,47 +963,49 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                         setInstVolume(val);
                         if (instAudioRef.current) instAudioRef.current.volume = val;
                       }}
-                      className="w-full accent-[#16C784] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+                      className="w-full accent-emerald-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Big Download Instrumental Button */}
+              {/* Download Instrumental Button */}
               <button
+                type="button"
                 onClick={handleDownloadInstrumental}
-                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#16C784] to-[#10b981] hover:brightness-110 active:scale-[0.99] text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+                className="w-full py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Download className="w-5 h-5" />
+                <Download className="w-4 h-4" />
                 <span>Download Instrumental (WAV)</span>
               </button>
             </div>
 
             {/* 2. VOCALS CARD */}
-            <div className="p-6 rounded-3xl bg-gradient-to-b from-[#101827] to-[#151F30] border border-white/10 hover:border-[#7357F5]/50 shadow-xl transition-all space-y-5 flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-2xl bg-[#0F172A] border border-slate-800 hover:border-slate-700 shadow-xl transition-colors space-y-5 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#7357F5]/20 border border-[#7357F5]/40 flex items-center justify-center text-[#7357F5] shadow-md">
-                      <Mic className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-sm">
+                      <Mic className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-extrabold text-white">Vocals</h3>
-                      <p className="text-xs text-[#a594fd] font-medium">Isolated vocals • A cappella</p>
+                      <h3 className="text-base sm:text-lg font-bold text-white">Vocals</h3>
+                      <p className="text-xs text-blue-400 font-medium">Isolated vocals - A cappella</p>
                     </div>
                   </div>
 
-                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#7357F5]/15 text-[#a594fd] font-bold border border-[#7357F5]/30">
+                  <span className="text-[11px] px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30">
                     A Cappella
                   </span>
                 </div>
 
                 {/* Player Row */}
-                <div className="p-3.5 rounded-2xl bg-[#080D18]/80 border border-white/5 flex items-center gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={togglePlayVocals}
-                    className="w-11 h-11 rounded-xl bg-[#7357F5] hover:bg-[#6345ec] active:scale-95 text-white flex items-center justify-center font-bold transition-all shadow-md cursor-pointer flex-shrink-0"
-                    aria-label={isPlayingVocals ? 'Pause' : 'Play Vocals'}
+                    className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white flex items-center justify-center font-bold transition-colors shadow-sm cursor-pointer flex-shrink-0"
+                    aria-label={isPlayingVocals ? 'Pause Vocals' : 'Play Vocals'}
                   >
                     {isPlayingVocals ? (
                       <Pause className="w-5 h-5 fill-current" />
@@ -746,7 +1015,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                   </button>
 
                   <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between text-[11px] text-slate-300">
                       <span className="flex items-center gap-1">
                         <Volume2 className="w-3.5 h-3.5" />
                         <span>Volume</span>
@@ -764,7 +1033,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                         setVocalsVolume(val);
                         if (vocalsAudioRef.current) vocalsAudioRef.current.volume = val;
                       }}
-                      className="w-full accent-[#7357F5] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+                      className="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
                     />
                   </div>
                 </div>
@@ -772,16 +1041,24 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
 
               {/* Download Vocals Button */}
               <button
+                type="button"
                 onClick={handleDownloadVocals}
-                className="w-full py-4 px-6 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-[0.99] text-white font-extrabold text-sm border border-white/10 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+                className="w-full py-3.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-slate-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
-                <Download className="w-5 h-5 text-[#a594fd]" />
+                <Download className="w-4 h-4 text-blue-400" />
                 <span>Download Vocals (WAV)</span>
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* YouTube Link Extraction Modal */}
+      <YouTubeLinkModal
+        isOpen={isYouTubeModalOpen}
+        onClose={() => setIsYouTubeModalOpen(false)}
+        onAudioLoaded={(loadedFile) => processSong(loadedFile)}
+      />
     </div>
   );
 };
