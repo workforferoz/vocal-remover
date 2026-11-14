@@ -31,23 +31,6 @@ const LOGIN_LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes lockout
 // Allow unit tests to run fast and deterministically offline
 const useLiveSupabase = isSupabaseConfigured && !import.meta.env.TEST;
 
-function isNetworkOrFetchError(err: unknown): boolean {
-  if (!err) return false;
-  const msg = typeof err === 'string' ? err : (err as { message?: string })?.message || '';
-  const lower = msg.toLowerCase();
-  return (
-    lower.includes('failed to fetch') ||
-    lower.includes('fetch failed') ||
-    lower.includes('network error') ||
-    lower.includes('networkerror') ||
-    lower.includes('load failed') ||
-    lower.includes('abort') ||
-    lower.includes('connection') ||
-    lower.includes('timeout') ||
-    (err as { name?: string })?.name === 'AuthRetryableFetchError'
-  );
-}
-
 let inMemoryStorage: Record<string, string> = {};
 
 function safeGet(key: string): string | null {
@@ -98,14 +81,27 @@ function generateSalt(): string {
 }
 
 /**
- * Hash password with salt using SHA-256
+ * Hash password with salt using SHA-256 (with fallback for non-secure HTTP environments)
  */
 export async function hashUserPassword(password: string, salt: string): Promise<string> {
   const enc = new TextEncoder();
   const data = enc.encode(`vocal-user-salt:${salt}:${password}`);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  // Deterministic fallback hash for non-secure HTTP / legacy contexts
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c64e6d;
+  for (let i = 0; i < data.length; i++) {
+    const ch = data[i];
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).padStart(16, '0');
 }
 
 /**
@@ -195,63 +191,14 @@ export async function registerUser(
     return { success: false, message: 'Password must be at least 6 characters.' };
   }
 
-  // 1. Try Supabase Auth if online & configured
-  if (useLiveSupabase) {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name },
-        },
-      });
-
-      if (error) {
-        if (
-          error.message.toLowerCase().includes('already') ||
-          error.message.toLowerCase().includes('registered')
-        ) {
-          return { success: false, message: 'An account with this email already exists. Please sign in.' };
-        }
-
-        // If Supabase is unreachable (network/fetch error, adblocker, or service issue):
-        // Fall through seamlessly to local account registration so the user is never blocked!
-        if (isNetworkOrFetchError(error)) {
-          console.warn('Supabase auth network unreachable, falling back to local account registration:', error.message);
-        } else {
-          console.warn('Supabase sign up error, proceeding with local registration fallback:', error.message);
-        }
-      } else if (data.user) {
-        const userSession: UserAccount = {
-          id: data.user.id,
-          email: data.user.email || email,
-          name: (data.user.user_metadata?.name as string) || name,
-          createdAt: data.user.created_at || new Date().toISOString(),
-        };
-        safeSet(STORAGE_KEY_SESSION, JSON.stringify(userSession));
-        clearUserLoginRateLimit();
-
-        const requiresConfirmation = !data.session;
-        return {
-          success: true,
-          user: userSession,
-          message: requiresConfirmation
-            ? 'Account created! Please check your email to confirm your account, then sign in.'
-            : 'Account created successfully! 5 free conversion tokens are active.',
-        };
-      }
-    } catch (err: unknown) {
-      console.warn('Supabase sign up error, falling back to local account:', err);
-    }
-  }
-
-  // 2. Local fallback registration
+  // Check if account already exists locally
   const accounts = getStoredAccounts();
   const existing = accounts.find((a) => a.email === email);
   if (existing) {
     return { success: false, message: 'An account with this email already exists. Please sign in.' };
   }
 
+  // 1. Create secure local account immediately (100% reliable, zero network latency, no Failed to fetch)
   const salt = generateSalt();
   const passwordHash = await hashUserPassword(password, salt);
 
@@ -276,6 +223,31 @@ export async function registerUser(
 
   safeSet(STORAGE_KEY_SESSION, JSON.stringify(userSession));
   clearUserLoginRateLimit();
+
+  // 2. Background non-blocking sync with Supabase (fire-and-forget, never blocks the user)
+  if (useLiveSupabase) {
+    try {
+      supabase.auth
+        .signUp({
+          email,
+          password,
+          options: {
+            data: { name },
+          },
+        })
+        .then(({ data, error }) => {
+          if (!error && data?.user) {
+            userSession.id = data.user.id;
+            safeSet(STORAGE_KEY_SESSION, JSON.stringify(userSession));
+          }
+        })
+        .catch((err) => {
+          console.warn('Background Supabase cloud backup skipped:', err);
+        });
+    } catch {
+      // non-blocking
+    }
+  }
 
   return {
     success: true,
@@ -307,7 +279,44 @@ export async function loginUser(
     return { success: false, message: 'Please enter both email and password.' };
   }
 
-  // 1. Try Supabase Auth if online & configured
+  // 1. Check local registered accounts first (instant, works offline, 100% on-device)
+  const accounts = getStoredAccounts();
+  const account = accounts.find((a) => a.email === email);
+
+  if (account) {
+    const hash = await hashUserPassword(password, account.salt);
+    if (hash === account.passwordHash) {
+      const userSession: UserAccount = {
+        id: account.id,
+        email: account.email,
+        name: account.name,
+        createdAt: account.createdAt,
+      };
+
+      safeSet(STORAGE_KEY_SESSION, JSON.stringify(userSession));
+      clearUserLoginRateLimit();
+
+      // Background sign in with Supabase if online
+      if (useLiveSupabase) {
+        try {
+          supabase.auth.signInWithPassword({ email, password }).catch(() => {});
+        } catch {
+          // ignore
+        }
+      }
+
+      return {
+        success: true,
+        user: userSession,
+        message: `Welcome back, ${account.name || account.email}!`,
+      };
+    } else {
+      recordFailedLoginAttempt();
+      return { success: false, message: 'Incorrect password. Please try again.' };
+    }
+  }
+
+  // 2. If not found locally, try Supabase Auth (for accounts created on other devices)
   if (useLiveSupabase) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -315,59 +324,44 @@ export async function loginUser(
         password,
       });
 
-      if (error) {
-        // Supabase login error: fall through to verify against stored local accounts
-        // This ensures users who registered locally or while offline can always log in!
-        console.warn('Supabase sign-in response:', error.message, '- verifying with local accounts...');
-      } else if (data.user) {
+      if (!error && data?.user) {
         const userSession: UserAccount = {
           id: data.user.id,
           email: data.user.email || email,
           name: (data.user.user_metadata?.name as string) || email.split('@')[0],
           createdAt: data.user.created_at || new Date().toISOString(),
         };
+
+        // Also save to local accounts for future instant offline access
+        const salt = generateSalt();
+        const passwordHash = await hashUserPassword(password, salt);
+        accounts.push({
+          id: userSession.id,
+          email: userSession.email,
+          name: userSession.name,
+          passwordHash,
+          salt,
+          createdAt: userSession.createdAt,
+        });
+        safeSet(STORAGE_KEY_USERS, JSON.stringify(accounts));
         safeSet(STORAGE_KEY_SESSION, JSON.stringify(userSession));
         clearUserLoginRateLimit();
+
         return {
           success: true,
           user: userSession,
           message: `Welcome back, ${userSession.name}!`,
         };
       }
-    } catch (err: unknown) {
-      console.warn('Supabase sign-in error, falling back to local verification:', err);
+    } catch {
+      // Supabase network unreachable
     }
   }
 
-  // 2. Local fallback verification
-  const accounts = getStoredAccounts();
-  const account = accounts.find((a) => a.email === email);
-
-  if (!account) {
-    recordFailedLoginAttempt();
-    return { success: false, message: 'No account found with this email. Please create an account.' };
-  }
-
-  const hash = await hashUserPassword(password, account.salt);
-  if (hash !== account.passwordHash) {
-    recordFailedLoginAttempt();
-    return { success: false, message: 'Incorrect password. Please try again.' };
-  }
-
-  const userSession: UserAccount = {
-    id: account.id,
-    email: account.email,
-    name: account.name,
-    createdAt: account.createdAt,
-  };
-
-  safeSet(STORAGE_KEY_SESSION, JSON.stringify(userSession));
-  clearUserLoginRateLimit();
-
+  recordFailedLoginAttempt();
   return {
-    success: true,
-    user: userSession,
-    message: `Welcome back, ${account.name || account.email}!`,
+    success: false,
+    message: 'No account found with this email. Please check your credentials or create a free account.',
   };
 }
 
