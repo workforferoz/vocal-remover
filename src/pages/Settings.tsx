@@ -9,16 +9,12 @@ import { Card } from '../components/common/Card';
 import { Modal } from '../components/common/Modal';
 import { getStorageDiagnostics, clearAudioFiles, resetEntireDatabase } from '../services/db';
 import { formatFileSize } from '../services/audioMetadata';
-import { getSystemDiagnostics } from '../services/engineClient';
 import type { OutputAudioFormat, QualityPreset } from '../types';
 import {
   Settings as SettingsIcon,
   Sliders,
   HardDrive,
-  Info,
-  CheckCircle,
   AlertTriangle,
-  Shield,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -41,8 +37,6 @@ export const SettingsPage: React.FC = () => {
     quotaBytes: number;
   } | null>(null);
 
-  const [diagnostics, setDiagnostics] = useState(getSystemDiagnostics);
-
   // Confirm modals
   const [showClearCacheModal, setShowClearCacheModal] = useState(false);
   const [showResetDbModal, setShowResetDbModal] = useState(false);
@@ -51,7 +45,6 @@ export const SettingsPage: React.FC = () => {
     getStorageDiagnostics().then((res) => {
       setStorageInfo(res);
     });
-    setDiagnostics(getSystemDiagnostics());
   };
 
   useEffect(() => {
@@ -239,47 +232,6 @@ export const SettingsPage: React.FC = () => {
               >
                 Reset All Local Data
               </button>
-            </div>
-          </div>
-        </Card>
-
-        {/* About & System Specs */}
-        <Card className="p-6 sm:p-7 space-y-6 bg-[#0F172A] border border-slate-800">
-          <div className="flex items-center gap-2.5 border-b border-slate-800 pb-3">
-            <Info className="w-5 h-5 text-blue-400" />
-            <h3 className="text-base font-semibold text-white">About Vocal Remover</h3>
-          </div>
-
-          <div className="space-y-3.5 text-xs">
-            <div className="flex justify-between py-1 border-b border-slate-800">
-              <span className="text-slate-300">Application:</span>
-              <span className="font-semibold text-blue-400">Vocal Remover</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-800">
-              <span className="text-slate-300">Build Version:</span>
-              <span className="font-mono text-white">v1.2.0</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-800">
-              <span className="text-slate-300">Host Environment:</span>
-              <span className="text-white">{diagnostics.browser}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-800">
-              <span className="text-slate-300">CPU Concurrency:</span>
-              <span className="font-mono text-white">{diagnostics.hardwareConcurrency} Logical Cores</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-800">
-              <span className="text-slate-300">Audio Processing:</span>
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" />
-                Local AI Engine + Web Audio
-              </span>
-            </div>
-            <div className="flex justify-between py-1">
-              <span className="text-slate-300">Data Privacy:</span>
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <Shield className="w-3.5 h-3.5" />
-                100% Private (Local Processing)
-              </span>
             </div>
           </div>
         </Card>

@@ -20,7 +20,6 @@ import {
   CheckCircle2,
   Phone,
   Mail,
-  Sparkles,
   Zap,
 } from 'lucide-react';
 
@@ -375,10 +374,6 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                   <ExternalLink className="w-4 h-4" />
                 </a>
 
-                <p className="text-[10px] text-slate-400 text-center leading-snug">
-                  Instant token recharge code delivered on WhatsApp from Ayesha Tech Studio.
-                </p>
-
                 <div className="pt-2 flex items-center justify-center border-t border-white/[0.06]">
                   <button
                     type="button"
@@ -464,8 +459,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
 
                 {/* Buy Permanent Software License Section */}
                 <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-white">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <div className="text-xs font-bold text-white">
                     <span>Want Permanent Lifetime Software?</span>
                   </div>
                   <p className="text-[11px] text-slate-400 leading-relaxed">
@@ -527,10 +521,6 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                   <span>Purchase Software License on WhatsApp ({WHATSAPP_SUPPORT_NUMBER})</span>
                   <ExternalLink className="w-4 h-4" />
                 </a>
-
-                <p className="text-[10px] text-slate-400 text-center leading-snug">
-                  Contact WhatsApp ({WHATSAPP_SUPPORT_NUMBER}) for immediate software license activation.
-                </p>
 
                 <div className="pt-2 flex items-center justify-center border-t border-white/[0.06]">
                   <button
