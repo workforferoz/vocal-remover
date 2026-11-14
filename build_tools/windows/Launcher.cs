@@ -29,7 +29,19 @@ namespace VocalRemover
                         string line = File.ReadAllText(configFile).Trim();
                         if (!string.IsNullOrEmpty(line) && line.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                         {
-                            targetUrl = line;
+                            if (line.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase) ||
+                                line.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Only use loopback URL if the server is actively responding
+                                if (IsServerResponding(line))
+                                {
+                                    targetUrl = line;
+                                }
+                            }
+                            else
+                            {
+                                targetUrl = line;
+                            }
                         }
                     }
                     catch { }
@@ -65,7 +77,7 @@ namespace VocalRemover
                         }
                         else
                         {
-                            targetUrl = "http://localhost:5173";
+                            targetUrl = "https://vocal-remover.vercel.app";
                         }
                     }
                 }

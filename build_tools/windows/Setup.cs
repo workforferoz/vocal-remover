@@ -153,7 +153,7 @@ namespace VocalRemoverInstaller
             mainPanel.Controls.Add(lblUrlTitle);
 
             txtUrl = new TextBox();
-            txtUrl.Text = "http://localhost:5173";
+            txtUrl.Text = "";
             txtUrl.Location = new Point(0, 30);
             txtUrl.Size = new Size(456, 26);
             txtUrl.BackColor = Color.FromArgb(15, 23, 42); // #0F172A
@@ -162,7 +162,7 @@ namespace VocalRemoverInstaller
             mainPanel.Controls.Add(txtUrl);
 
             Label lblUrlHelp = new Label();
-            lblUrlHelp.Text = "Auto-detects Demucs engine (8524) and Vite (5173), or uses offline standalone mode.";
+            lblUrlHelp.Text = "Leave blank for offline standalone mode (recommended), or enter custom hosted URL.";
             lblUrlHelp.Font = new Font("Segoe UI", 8F);
             lblUrlHelp.ForeColor = Color.FromArgb(148, 163, 184);
             lblUrlHelp.Location = new Point(0, 58);
