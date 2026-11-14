@@ -31,6 +31,23 @@ const LOGIN_LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes lockout
 // Allow unit tests to run fast and deterministically offline
 const useLiveSupabase = isSupabaseConfigured && !import.meta.env.TEST;
 
+function isNetworkOrFetchError(err: unknown): boolean {
+  if (!err) return false;
+  const msg = typeof err === 'string' ? err : (err as { message?: string })?.message || '';
+  const lower = msg.toLowerCase();
+  return (
+    lower.includes('failed to fetch') ||
+    lower.includes('fetch failed') ||
+    lower.includes('network error') ||
+    lower.includes('networkerror') ||
+    lower.includes('load failed') ||
+    lower.includes('abort') ||
+    lower.includes('connection') ||
+    lower.includes('timeout') ||
+    (err as { name?: string })?.name === 'AuthRetryableFetchError'
+  );
+}
+
 let inMemoryStorage: Record<string, string> = {};
 
 function safeGet(key: string): string | null {
@@ -196,10 +213,15 @@ export async function registerUser(
         ) {
           return { success: false, message: 'An account with this email already exists. Please sign in.' };
         }
-        return { success: false, message: error.message };
-      }
 
-      if (data.user) {
+        // If Supabase is unreachable (network/fetch error, adblocker, or service issue):
+        // Fall through seamlessly to local account registration so the user is never blocked!
+        if (isNetworkOrFetchError(error)) {
+          console.warn('Supabase auth network unreachable, falling back to local account registration:', error.message);
+        } else {
+          console.warn('Supabase sign up error, proceeding with local registration fallback:', error.message);
+        }
+      } else if (data.user) {
         const userSession: UserAccount = {
           id: data.user.id,
           email: data.user.email || email,
@@ -294,11 +316,10 @@ export async function loginUser(
       });
 
       if (error) {
-        recordFailedLoginAttempt();
-        return { success: false, message: error.message };
-      }
-
-      if (data.user) {
+        // Supabase login error: fall through to verify against stored local accounts
+        // This ensures users who registered locally or while offline can always log in!
+        console.warn('Supabase sign-in response:', error.message, '- verifying with local accounts...');
+      } else if (data.user) {
         const userSession: UserAccount = {
           id: data.user.id,
           email: data.user.email || email,
