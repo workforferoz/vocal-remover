@@ -59,10 +59,10 @@ export const Header: React.FC = () => {
             className="flex items-center gap-2.5 group focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl p-1"
             title="Vocal Remover Home"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:shadow-blue-500/40 group-hover:scale-105 transition-all">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:scale-105 transition-all">
               <Music className="w-4 h-4" />
             </div>
-            <span className="font-extrabold text-base sm:text-lg text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300 tracking-tight">
+            <span className="font-extrabold text-base sm:text-lg text-white tracking-tight">
               Vocal Remover
             </span>
           </Link>

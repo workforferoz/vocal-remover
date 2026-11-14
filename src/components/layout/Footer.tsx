@@ -18,10 +18,10 @@ export const Footer: React.FC = () => {
             {/* Column 1: Brand & Clickable Logo */}
             <div className="space-y-3 sm:col-span-2">
               <Link to="/" className="flex items-center gap-2.5 w-fit group" title="Vocal Remover Home">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:scale-105 transition-all">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:scale-105 transition-all">
                   <Music className="w-4 h-4" />
                 </div>
-                <span className="font-extrabold text-base text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300 tracking-tight">
+                <span className="font-extrabold text-base text-white tracking-tight">
                   Vocal Remover
                 </span>
               </Link>

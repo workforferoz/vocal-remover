@@ -136,7 +136,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
       {/* Header */}
       <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-start justify-between bg-white/[0.03] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
             <Coins className="w-5 h-5" />
           </div>
           <div>
