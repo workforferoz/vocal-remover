@@ -13,6 +13,52 @@ from .config import settings
 
 logger = logging.getLogger("vocal_studio.separation")
 
+def suppress_vocal_bleed(
+    inst_tensor: torch.Tensor,
+    vocals_tensor: torch.Tensor,
+    sample_rate: int = 44100,
+    suppression_strength: float = 0.65
+) -> torch.Tensor:
+    """
+    Suppresses residual vocal bleed and reverb leakage from the instrumental stem
+    using spectral subtraction in the vocal formant band (150Hz - 6500Hz).
+    """
+    try:
+        n_fft = 2048
+        hop_length = 512
+        window = torch.hann_window(n_fft, device=inst_tensor.device)
+        
+        # Compute STFT
+        inst_stft = torch.stft(inst_tensor, n_fft=n_fft, hop_length=hop_length, window=window, return_complex=True)
+        voc_stft = torch.stft(vocals_tensor, n_fft=n_fft, hop_length=hop_length, window=window, return_complex=True)
+        
+        inst_mag = torch.abs(inst_stft)
+        voc_mag = torch.abs(voc_stft)
+        
+        # Vocal frequency bin range: 150 Hz to 6500 Hz
+        freq_resolution = sample_rate / n_fft
+        min_bin = max(1, int(150 / freq_resolution))
+        max_bin = min(inst_mag.shape[1] - 1, int(6500 / freq_resolution))
+        
+        # Soft Wiener-style mask: where vocal energy dominates, attenuate instrumental bleed
+        eps = 1e-7
+        vocal_ratio = (voc_mag[:, min_bin:max_bin, :] ** 2) / (voc_mag[:, min_bin:max_bin, :] ** 2 + inst_mag[:, min_bin:max_bin, :] ** 2 + eps)
+        
+        # Attenuation gain (clamp so we never mute legitimate instruments)
+        gain = 1.0 - (suppression_strength * vocal_ratio)
+        gain = torch.clamp(gain, min=0.25, max=1.0)
+        
+        # Apply gain in vocal band
+        inst_stft_clean = inst_stft.clone()
+        inst_stft_clean[:, min_bin:max_bin, :] = inst_stft[:, min_bin:max_bin, :] * gain
+        
+        # Invert STFT back to waveform
+        clean_audio = torch.istft(inst_stft_clean, n_fft=n_fft, hop_length=hop_length, window=window, length=inst_tensor.shape[-1])
+        return clean_audio
+    except Exception as e:
+        logger.warning(f"Spectral bleed suppression fallback to raw instrumental: {e}")
+        return inst_tensor
+
 class DemucsEngine:
     """
     Manages Demucs model caching, hardware device assignment, and audio separation.
@@ -184,11 +230,22 @@ class DemucsEngine:
         ]
         if non_vocal_indices:
             inst_audio = torch.stack([sources[i] for i in non_vocal_indices]).sum(dim=0).cpu()
+
+            # Clean residual vocal bleed and reverb leakage from instrumental stem
+            vocals_idx = next((i for i, name in enumerate(model.sources) if name.lower() == "vocals"), None)
+            if vocals_idx is not None:
+                inst_audio = suppress_vocal_bleed(
+                    inst_tensor=inst_audio,
+                    vocals_tensor=sources[vocals_idx].cpu(),
+                    sample_rate=model.samplerate,
+                    suppression_strength=0.65
+                )
+
             inst_audio = torch.clamp(inst_audio, -1.0, 1.0)
             inst_path = output_dir / "instrumental.wav"
             sf.write(str(inst_path), inst_audio.numpy().T, model.samplerate, subtype="PCM_16")
             stems_generated["instrumental"] = inst_path
-            logger.info(f"Instrumental track written: {inst_path.name} ({inst_path.stat().st_size} bytes)")
+            logger.info(f"Instrumental track written with vocal bleed suppression: {inst_path.name} ({inst_path.stat().st_size} bytes)")
 
         # Low-end PC RAM optimization: Explicitly release tensor memory
         del wav, sources, ref

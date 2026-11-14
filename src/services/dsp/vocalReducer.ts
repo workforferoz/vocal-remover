@@ -11,7 +11,9 @@
 export interface ReductionConfig {
   strength: number; // 0.0 (original) to 1.0 (full reduction)
   preserveBass?: boolean; // Optional low-frequency retention
-  bassCutoffHz?: number; // Cutoff for bass retention (default ~180Hz)
+  bassCutoffHz?: number; // Cutoff for bass retention (default ~150Hz)
+  suppressReverb?: boolean; // Attenuates stereo vocal reverb & off-center bleed
+  aggressiveBleedRemoval?: boolean; // Deep vocal suppression
   sampleRate?: number;
 }
 
@@ -133,6 +135,22 @@ export function applyVocalReductionSync(
   const vocalLeft = new Float32Array(numSamples);
   const vocalRight = new Float32Array(numSamples);
 
+  const preserveBass = Boolean(config.preserveBass);
+  const suppressReverb = Boolean(config.suppressReverb || config.aggressiveBleedRemoval);
+  const bassCutoff = config.bassCutoffHz || 140;
+
+  // Bass low-pass filter coefficients (for preserving kick/bass punch)
+  let bassAlpha = 0;
+  if (preserveBass) {
+    const rc = 1.0 / (2 * Math.PI * bassCutoff);
+    const dt = 1.0 / sampleRate;
+    bassAlpha = dt / (rc + dt);
+  }
+
+  let prevBass = 0;
+  let vocalEnv = 0;
+  const envDecay = Math.exp(-1.0 / (sampleRate * 0.05)); // 50ms envelope
+
   let peak = 0;
   let sumSquares = 0;
 
@@ -148,6 +166,27 @@ export function applyVocalReductionSync(
     // Linear interpolation between original stereo and centre-cancelled audio
     let outL = (1.0 - strength) * l + strength * diffL;
     let outR = (1.0 - strength) * r + strength * diffR;
+
+    // Optional Bass preservation: extract bass from mid channel and add back
+    if (preserveBass) {
+      const mid = (l + r) * 0.5;
+      prevBass = prevBass + bassAlpha * (mid - prevBass);
+      outL += prevBass * strength;
+      outR += prevBass * strength;
+    }
+
+    // Optional Reverb / Bleed suppression: when vocal activity is high, suppress side reflections
+    if (suppressReverb && strength > 0.5) {
+      const mid = (l + r) * 0.5;
+      const vocalContent = Math.abs(mid - prevBass);
+      vocalEnv = vocalEnv * envDecay + vocalContent * (1.0 - envDecay);
+
+      if (vocalEnv > 0.02) {
+        const suppressionFactor = Math.max(0.25, 1.0 - Math.min(0.75, vocalEnv * 2.2));
+        outL *= suppressionFactor;
+        outR *= suppressionFactor;
+      }
+    }
 
     // Soft clamp protection to prevent accidental clipping
     if (outL > 1.0) outL = 1.0;
@@ -232,6 +271,22 @@ export async function applyVocalReductionAsync(
   const vocalLeft = new Float32Array(numSamples);
   const vocalRight = new Float32Array(numSamples);
 
+  const preserveBass = Boolean(config.preserveBass);
+  const suppressReverb = Boolean(config.suppressReverb || config.aggressiveBleedRemoval);
+  const bassCutoff = config.bassCutoffHz || 140;
+
+  // Bass low-pass filter coefficients
+  let bassAlpha = 0;
+  if (preserveBass) {
+    const rc = 1.0 / (2 * Math.PI * bassCutoff);
+    const dt = 1.0 / sampleRate;
+    bassAlpha = dt / (rc + dt);
+  }
+
+  let prevBass = 0;
+  let vocalEnv = 0;
+  const envDecay = Math.exp(-1.0 / (sampleRate * 0.05)); // 50ms envelope
+
   let peak = 0;
   let sumSquares = 0;
 
@@ -251,6 +306,27 @@ export async function applyVocalReductionAsync(
 
         let outL = (1.0 - strength) * l + strength * diffL;
         let outR = (1.0 - strength) * r + strength * diffR;
+
+        // Optional Bass preservation
+        if (preserveBass) {
+          const mid = (l + r) * 0.5;
+          prevBass = prevBass + bassAlpha * (mid - prevBass);
+          outL += prevBass * strength;
+          outR += prevBass * strength;
+        }
+
+        // Optional Reverb / Bleed suppression
+        if (suppressReverb && strength > 0.5) {
+          const mid = (l + r) * 0.5;
+          const vocalContent = Math.abs(mid - prevBass);
+          vocalEnv = vocalEnv * envDecay + vocalContent * (1.0 - envDecay);
+
+          if (vocalEnv > 0.02) {
+            const suppressionFactor = Math.max(0.25, 1.0 - Math.min(0.75, vocalEnv * 2.2));
+            outL *= suppressionFactor;
+            outR *= suppressionFactor;
+          }
+        }
 
         if (outL > 1.0) outL = 1.0;
         else if (outL < -1.0) outL = -1.0;

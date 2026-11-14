@@ -144,7 +144,12 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
         const reduced = await applyVocalReductionAsync(
           decoded.channels,
           decoded.sampleRate,
-          { strength: 0.95 },
+          {
+            strength: 1.0,
+            preserveBass: true,
+            suppressReverb: true,
+            aggressiveBleedRemoval: true,
+          },
           (pct: number) => {
             setProgress(Math.round(60 + pct * 0.25));
           }
