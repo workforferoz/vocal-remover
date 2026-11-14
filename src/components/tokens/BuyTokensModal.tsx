@@ -20,7 +20,6 @@ import {
   CheckCircle2,
   Phone,
   Mail,
-  ShieldCheck,
   Sparkles,
   Zap,
 } from 'lucide-react';
@@ -151,14 +150,9 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                   Unlimited Active
                 </span>
               ) : (
-                <>
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
-                    1 Token = Rs 1
-                  </span>
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 font-bold hidden sm:inline-block">
-                    1 Conversion = 1 Token
-                  </span>
-                </>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
+                  1 Token = Rs 1
+                </span>
               )}
             </div>
             <p className="text-xs text-slate-300 mt-0.5">
@@ -166,7 +160,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                 <span className="text-emerald-400 font-bold">Unlimited Tokens Active &bull; No conversion limit</span>
               ) : (
                 <span>
-                  Current Balance: <strong className="text-white font-bold">{balance} Tokens</strong> (1 Conversion = 1 Token)
+                  Current Balance: <strong className="text-white font-bold">{balance} Tokens</strong>
                 </span>
               )}
             </p>
@@ -573,10 +567,6 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                 <Mail className="w-3 h-3 text-slate-400" />
                 <span>ayeshatechstudio@gmail.com</span>
               </a>
-            </div>
-            <div className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-              <span>100% Private On-Device Processing</span>
             </div>
           </div>
           <div className="pt-1.5 border-t border-white/[0.06] flex items-center justify-between">

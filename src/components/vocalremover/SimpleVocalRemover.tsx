@@ -26,7 +26,6 @@ import {
   CheckCircle2,
   RefreshCw,
   AlertCircle,
-  Coins,
   Sparkles,
 } from 'lucide-react';
 
@@ -44,7 +43,6 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
   const { showNotification } = useNotificationStore();
   const { createProject } = useProjectStore();
   const {
-    balance: tokenBalance,
     isUnlimited,
     canConvert,
     consumeToken,
@@ -691,11 +689,6 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
       {status === 'idle' && (
         <div className="space-y-6">
           <div className="text-center space-y-3.5 py-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-semibold text-blue-400 shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>Studio-Grade AI Stem Separation</span>
-            </div>
-
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight flex items-center justify-center gap-3">
               <span className="p-2 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/25">
                 <Music className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -708,35 +701,6 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               Extract the <strong>instrumental (karaoke)</strong> and isolate clean vocals from any song.
               Fast, private, and studio quality.
             </p>
-
-            {/* Token Status Badge */}
-            <div className="pt-1 flex justify-center">
-              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-slate-300 shadow-sm backdrop-blur-md">
-                <Coins className="w-3.5 h-3.5 text-blue-400" />
-                {isUnlimited ? (
-                  <>
-                    <span className="text-emerald-400 font-bold">Unlimited Conversions Active</span>
-                    <span className="text-slate-600">&bull;</span>
-                    <span className="text-slate-300">No Limit</span>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      Available: <strong className="text-white font-bold">{tokenBalance} Tokens</strong>
-                    </span>
-                    <span className="text-slate-600">&bull;</span>
-                    <span className="text-emerald-400 font-semibold">1 Conversion = 1 Token</span>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={openTokenModal}
-                  className="ml-1 text-[11px] font-bold text-blue-400 hover:text-white underline cursor-pointer transition-colors"
-                >
-                  {isUnlimited ? 'Tokens' : 'Buy More'}
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Big Audio Dropzone & YouTube Option */}
