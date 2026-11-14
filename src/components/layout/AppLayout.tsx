@@ -32,7 +32,14 @@ export const AppLayout: React.FC = () => {
   }, [initUser, initTokens, initSettings, loadProjects, loadJobs, checkEngine]);
 
   return (
-    <div className="min-h-screen bg-[#0B1120] text-slate-100 flex flex-col justify-between overflow-x-hidden">
+    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between overflow-x-hidden relative selection:bg-blue-600/30 selection:text-white">
+      {/* Modern Atmospheric Background Ambient Glows */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[340px] bg-gradient-to-b from-blue-600/15 via-indigo-500/10 to-transparent blur-3xl rounded-full" />
+        <div className="absolute top-1/4 -left-48 w-80 h-80 bg-blue-500/8 blur-3xl rounded-full" />
+        <div className="absolute top-2/3 -right-48 w-80 h-80 bg-indigo-600/8 blur-3xl rounded-full" />
+      </div>
+
       {/* Header bar */}
       <Header />
 

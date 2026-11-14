@@ -124,28 +124,28 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
   const showSoftware = activeTab === 'both' || activeTab === 'software';
 
   const cardContent = (
-    <div className={`w-full max-w-4xl bg-[#0F172A] border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 overflow-hidden relative flex flex-col ${isModal ? 'max-h-[92vh] my-auto' : 'mx-auto'}`}>
+    <div className={`w-full max-w-4xl bg-[#0C1222]/95 border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/90 overflow-hidden relative flex flex-col backdrop-blur-2xl ${isModal ? 'max-h-[92vh] my-auto' : 'mx-auto'}`}>
       {/* Header */}
-      <div className="p-4 sm:p-5 border-b border-slate-800 flex items-start justify-between bg-slate-900/90 shrink-0">
+      <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-start justify-between bg-white/[0.03] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
             <Coins className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 id="token-modal-title" className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h2 id="token-modal-title" className="text-base sm:text-lg font-extrabold text-white tracking-tight">
                 Conversion Tokens
               </h2>
               {isUnlimited ? (
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
                   Unlimited Active
                 </span>
               ) : (
                 <>
-                  <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
                     1 Token = Rs 1
                   </span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/30 font-semibold hidden sm:inline-block">
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 font-bold hidden sm:inline-block">
                     1 Conversion = 1 Token
                   </span>
                 </>
@@ -167,7 +167,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
           <button
             type="button"
             onClick={handleClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer shrink-0"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -175,7 +175,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
         ) : (
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 hover:text-white text-xs font-semibold border border-white/10 transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Home</span>
@@ -184,14 +184,14 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
       </div>
 
       {/* Tab Switcher: Move between Purchase Tokens and Software / Code */}
-      <div className="flex border-b border-slate-800 bg-[#0B1120] p-1.5 sm:p-2 gap-1.5 shrink-0">
+      <div className="flex border-b border-white/[0.06] bg-black/40 p-1.5 sm:p-2 gap-1.5 shrink-0">
         <button
           type="button"
           onClick={() => setActiveTab('tokens')}
           className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
             activeTab === 'tokens'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
           }`}
         >
           <Coins className="w-4 h-4 text-blue-400" />
@@ -203,8 +203,8 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
           onClick={() => setActiveTab('software')}
           className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
             activeTab === 'software'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
           }`}
         >
           <KeyRound className="w-4 h-4 text-emerald-400" />
@@ -216,8 +216,8 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
           onClick={() => setActiveTab('both')}
           className={`hidden md:flex py-2 px-4 rounded-xl text-xs sm:text-sm font-bold items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeTab === 'both'
-              ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              ? 'bg-white/[0.1] text-white border border-white/10 shadow-xs'
+              : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
           }`}
           title="Display side by side"
         >
@@ -229,7 +229,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
       <div className={`p-4 sm:p-6 space-y-6 flex-1 ${isModal ? 'overflow-y-auto' : ''}`}>
         {/* Active Unlimited Status Banner */}
         {isUnlimited && (
-          <div className="p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-3">
+          <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-3 shadow-md shadow-emerald-950/20">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-white text-sm">Unlimited Conversions Active</p>
@@ -248,14 +248,14 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
         >
           {/* WINDOW 1: LIST OF TOKENS TO PURCHASE */}
           {showTokens && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] space-y-4 flex flex-col justify-between shadow-lg">
               <div className="space-y-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white">
+                    <h3 className="text-sm sm:text-base font-extrabold text-white">
                       Purchase Conversion Tokens
                     </h3>
                     <p className="text-[11px] text-slate-400">
@@ -275,12 +275,12 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                         onClick={() => handleSelectPack(pack.tokens)}
                         className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative ${
                           isSelected
-                            ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/30 text-white shadow-sm'
-                            : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80'
+                            ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/30 text-white shadow-md shadow-blue-500/10'
+                            : 'bg-black/30 border-white/[0.06] text-slate-300 hover:border-white/15 hover:bg-white/[0.04]'
                         }`}
                       >
                         {pack.popular && (
-                          <span className="absolute -top-2 right-2 px-1.5 py-0.5 rounded-md bg-blue-600 text-[9px] font-bold text-white uppercase tracking-wider">
+                          <span className="absolute -top-2 right-2 px-1.5 py-0.5 rounded-md bg-blue-600 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
                             Popular
                           </span>
                         )}
@@ -304,7 +304,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                 </div>
 
                 {/* Custom Tokens Input */}
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                <div className="p-3 rounded-xl bg-black/30 border border-white/[0.06] space-y-1.5">
                   <span className="text-[11px] text-slate-300 font-semibold block">
                     Or custom amount:
                   </span>
@@ -315,7 +315,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                       step={1}
                       value={customTokens}
                       onChange={handleCustomChange}
-                      className="w-24 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs text-center focus:outline-none focus:border-blue-500"
+                      className="w-24 px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white font-mono text-xs text-center focus:outline-none focus:border-blue-500 transition-colors"
                       placeholder="Tokens"
                     />
                     <span className="text-xs text-slate-300">
@@ -326,7 +326,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
               </div>
 
               {/* Purchase Button on WhatsApp */}
-              <div className="pt-2 space-y-2 border-t border-slate-800">
+              <div className="pt-2 space-y-2 border-t border-white/[0.06]">
                 <div className="flex items-center justify-between text-xs text-slate-300">
                   <span>Selected Pack:</span>
                   <strong className="text-white font-extrabold text-sm">
@@ -338,7 +338,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                   href={tokenPurchaseWaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:bg-[#1caa4f] text-white font-bold text-xs sm:text-sm shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer no-underline"
+                  className="w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer no-underline"
                 >
                   <MessageCircle className="w-4.5 h-4.5" />
                   <span>Purchase {currentTokens} Tokens on WhatsApp ({WHATSAPP_SUPPORT_NUMBER})</span>
@@ -354,14 +354,14 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
 
           {/* WINDOW 2: TOKEN CODE & SOFTWARE LICENSE WINDOW */}
           {showSoftware && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] space-y-4 flex flex-col justify-between shadow-lg">
               <div className="space-y-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
                     <KeyRound className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white">
+                    <h3 className="text-sm sm:text-base font-extrabold text-white">
                       Software License & Token Code
                     </h3>
                     <p className="text-[11px] text-slate-400">
@@ -387,7 +387,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                       placeholder="TOK10-XXXX-XXXX or XXXX-XXXX-XXXX-XXXX"
                       disabled={isRedeeming}
                       maxLength={32}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-center text-xs tracking-widest placeholder:text-slate-500 focus:outline-none focus:border-blue-500 uppercase"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white font-mono text-center text-xs tracking-widest placeholder:text-slate-500 focus:outline-none focus:border-blue-500 uppercase transition-colors"
                     />
                   </div>
 
@@ -408,7 +408,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                   <button
                     type="submit"
                     disabled={isRedeeming || !voucherInput.trim()}
-                    className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-xs sm:text-sm disabled:opacity-50 transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 text-white font-bold text-xs sm:text-sm disabled:opacity-50 shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     {isRedeeming ? (
                       <span>Activating...</span>
@@ -422,7 +422,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                 </form>
 
                 {/* Buy Permanent Software License Section */}
-                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+                <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
                   <div className="flex items-center gap-2 text-xs font-bold text-white">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                     <span>Want Permanent Lifetime Software?</span>
@@ -434,12 +434,12 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
               </div>
 
               {/* Purchase Full Software on WhatsApp Button */}
-              <div className="pt-2 space-y-2 border-t border-slate-800">
+              <div className="pt-2 space-y-2 border-t border-white/[0.06]">
                 <a
                   href={softwarePurchaseWaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:bg-[#1caa4f] text-white font-bold text-xs sm:text-sm shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer no-underline"
+                  className="w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer no-underline"
                 >
                   <MessageCircle className="w-4.5 h-4.5" />
                   <span>Purchase Software License on WhatsApp ({WHATSAPP_SUPPORT_NUMBER})</span>
@@ -455,7 +455,7 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
         </div>
 
         {/* Support Information & Device Reference */}
-        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-2 text-[11px] text-slate-400">
+        <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2 text-[11px] text-slate-400">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-3">
               <a
@@ -480,9 +480,9 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
               <span>100% Private On-Device Processing</span>
             </div>
           </div>
-          <div className="pt-1.5 border-t border-slate-800 flex items-center justify-between">
+          <div className="pt-1.5 border-t border-white/[0.06] flex items-center justify-between">
             <span>Device Reference:</span>
-            <code className="text-slate-300 font-mono text-[10px] bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
+            <code className="text-slate-300 font-mono text-[10px] bg-black/60 px-2 py-0.5 rounded-md border border-white/10">
               {deviceId}
             </code>
           </div>

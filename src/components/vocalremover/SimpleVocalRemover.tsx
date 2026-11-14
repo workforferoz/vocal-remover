@@ -690,21 +690,28 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
       {/* 1. IDLE STATE: Upload Hero Dropzone */}
       {status === 'idle' && (
         <div className="space-y-6">
-          <div className="text-center space-y-3 py-4">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center justify-center gap-3">
-              <span className="p-2 rounded-xl bg-blue-600 text-white shadow-sm">
-                <Music className="w-6 h-6" />
+          <div className="text-center space-y-3.5 py-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-semibold text-blue-400 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              <span>Studio-Grade AI Stem Separation</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight flex items-center justify-center gap-3">
+              <span className="p-2 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/25">
+                <Music className="w-6 h-6 sm:w-7 sm:h-7" />
               </span>
-              <span>Vocal Remover</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300">
+                Vocal Remover
+              </span>
             </h1>
             <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed">
-              Extract the <strong>instrumental (karaoke)</strong> and remove vocals from any song.
-              Fast, clean, and high quality audio.
+              Extract the <strong>instrumental (karaoke)</strong> and isolate clean vocals from any song.
+              Fast, private, and studio quality.
             </p>
 
             {/* Token Status Badge */}
             <div className="pt-1 flex justify-center">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 shadow-xs">
+              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-slate-300 shadow-sm backdrop-blur-md">
                 <Coins className="w-3.5 h-3.5 text-blue-400" />
                 {isUnlimited ? (
                   <>
@@ -724,7 +731,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                 <button
                   type="button"
                   onClick={openTokenModal}
-                  className="ml-1 text-[11px] font-bold text-blue-400 hover:text-white underline cursor-pointer"
+                  className="ml-1 text-[11px] font-bold text-blue-400 hover:text-white underline cursor-pointer transition-colors"
                 >
                   {isUnlimited ? 'Tokens' : 'Buy More'}
                 </button>
@@ -733,7 +740,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           </div>
 
           {/* Big Audio Dropzone & YouTube Option */}
-          <div className="p-2 sm:p-4 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-3.5">
+          <div className="p-3 sm:p-5 rounded-3xl bg-gradient-to-b from-white/[0.04] via-slate-900/90 to-[#0A0F1D] border border-white/[0.08] shadow-2xl shadow-black/80 backdrop-blur-xl space-y-4">
             <FileDropzone
               onFileAccepted={(f) => processSong(f)}
               onBeforeOpen={handleBeforeOpen}
@@ -744,9 +751,9 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
             {/* Quick Inline YouTube Link Bar */}
             <form
               onSubmit={handleInlineYouTubeSubmit}
-              className="p-3 sm:p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-center gap-2.5"
+              className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex flex-col sm:flex-row items-center gap-2.5"
             >
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 shrink-0">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-200 shrink-0">
                 <div className="w-6 h-6 rounded-lg bg-red-600/20 text-red-500 flex items-center justify-center">
                   <YouTubeIcon className="w-3.5 h-3.5 text-red-500" />
                 </div>
@@ -758,12 +765,12 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                 onChange={(e) => setInlineYouTubeUrl(e.target.value)}
                 disabled={isInlineExtracting}
                 placeholder="Paste YouTube song link (e.g. https://www.youtube.com/watch?v=...)"
-                className="flex-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500 transition-colors"
+                className="flex-1 w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/30 transition-all font-mono"
               />
               <button
                 type="submit"
                 disabled={isInlineExtracting || !inlineYouTubeUrl.trim()}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
               >
                 {isInlineExtracting ? (
                   <>
@@ -874,13 +881,13 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           </div>
 
           {/* Master Scrubber Timeline */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#0F172A] border border-slate-800 space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.08] backdrop-blur-md space-y-2.5 shadow-lg">
             <div className="flex items-center justify-between text-xs text-slate-300 font-mono">
-              <span>{formatDuration(currentTime)}</span>
+              <span className="font-semibold text-white">{formatDuration(currentTime)}</span>
               <button
                 type="button"
                 onClick={togglePlayBoth}
-                className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs font-bold border border-white/10 flex items-center gap-2 transition-all cursor-pointer shadow-xs active:scale-95"
               >
                 {isPlayingBoth ? (
                   <>
@@ -894,7 +901,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                   </>
                 )}
               </button>
-              <span>{formatDuration(duration)}</span>
+              <span className="text-slate-400">{formatDuration(duration)}</span>
             </div>
 
             <input
@@ -911,30 +918,30 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           {/* TWO MAIN CARDS: 1. INSTRUMENTAL & 2. VOCALS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 1. INSTRUMENTAL CARD */}
-            <div className="p-5 sm:p-6 rounded-2xl bg-[#0F172A] border-2 border-emerald-500/40 hover:border-emerald-500 shadow-xl transition-colors space-y-5 flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-emerald-500/[0.08] via-emerald-950/20 to-[#0C1222] border border-emerald-500/35 hover:border-emerald-400 shadow-xl shadow-emerald-950/20 transition-all space-y-5 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-sm">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/15">
                       <Music className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-white">Instrumental</h3>
-                      <p className="text-xs text-emerald-400 font-medium">Music only - Vocals removed</p>
+                      <h3 className="text-base sm:text-lg font-extrabold text-white">Instrumental</h3>
+                      <p className="text-xs text-emerald-400/90 font-medium">Music only - Vocals removed</p>
                     </div>
                   </div>
 
-                  <span className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30">
+                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30">
                     Karaoke
                   </span>
                 </div>
 
                 {/* Player Row */}
-                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
+                <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-center gap-3 backdrop-blur-xs">
                   <button
                     type="button"
                     onClick={togglePlayInstrumental}
-                    className="w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-center font-bold transition-colors shadow-sm cursor-pointer flex-shrink-0"
+                    className="w-10 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 flex items-center justify-center font-bold transition-all shadow-md shadow-emerald-500/25 cursor-pointer flex-shrink-0"
                     aria-label={isPlayingInst ? 'Pause Instrumental' : 'Play Instrumental'}
                   >
                     {isPlayingInst ? (
@@ -947,7 +954,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between text-[11px] text-slate-300">
                       <span className="flex items-center gap-1">
-                        <Volume2 className="w-3.5 h-3.5" />
+                        <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Volume</span>
                       </span>
                       <span className="font-mono">{Math.round(instVolume * 100)}%</span>
@@ -973,7 +980,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               <button
                 type="button"
                 onClick={handleDownloadInstrumental}
-                className="w-full py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span>Download Instrumental (WAV)</span>
@@ -981,30 +988,30 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
             </div>
 
             {/* 2. VOCALS CARD */}
-            <div className="p-5 sm:p-6 rounded-2xl bg-[#0F172A] border border-slate-800 hover:border-slate-700 shadow-xl transition-colors space-y-5 flex flex-col justify-between">
+            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-blue-500/[0.08] via-indigo-950/20 to-[#0C1222] border border-blue-500/35 hover:border-blue-400 shadow-xl shadow-blue-950/20 transition-all space-y-5 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-sm">
+                    <div className="w-11 h-11 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-md shadow-blue-500/15">
                       <Mic className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-white">Vocals</h3>
-                      <p className="text-xs text-blue-400 font-medium">Isolated vocals - A cappella</p>
+                      <h3 className="text-base sm:text-lg font-extrabold text-white">Vocals</h3>
+                      <p className="text-xs text-blue-400/90 font-medium">Isolated vocals - A cappella</p>
                     </div>
                   </div>
 
-                  <span className="text-[11px] px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30">
+                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30">
                     A Cappella
                   </span>
                 </div>
 
                 {/* Player Row */}
-                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
+                <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-center gap-3 backdrop-blur-xs">
                   <button
                     type="button"
                     onClick={togglePlayVocals}
-                    className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white flex items-center justify-center font-bold transition-colors shadow-sm cursor-pointer flex-shrink-0"
+                    className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white flex items-center justify-center font-bold transition-all shadow-md shadow-blue-500/25 cursor-pointer flex-shrink-0"
                     aria-label={isPlayingVocals ? 'Pause Vocals' : 'Play Vocals'}
                   >
                     {isPlayingVocals ? (
@@ -1017,7 +1024,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between text-[11px] text-slate-300">
                       <span className="flex items-center gap-1">
-                        <Volume2 className="w-3.5 h-3.5" />
+                        <Volume2 className="w-3.5 h-3.5 text-blue-400" />
                         <span>Volume</span>
                       </span>
                       <span className="font-mono">{Math.round(vocalsVolume * 100)}%</span>
@@ -1043,9 +1050,9 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               <button
                 type="button"
                 onClick={handleDownloadVocals}
-                className="w-full py-3.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-slate-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Download className="w-4 h-4 text-blue-400" />
+                <Download className="w-4 h-4" />
                 <span>Download Vocals (WAV)</span>
               </button>
             </div>

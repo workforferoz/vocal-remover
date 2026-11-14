@@ -11,21 +11,21 @@ export const Footer: React.FC = () => {
 
   return (
     <>
-      <footer className="border-t border-slate-800 bg-[#0F172A] py-8 px-4 sm:px-6 lg:px-8 mt-auto">
-        <div className="max-w-5xl mx-auto space-y-6">
+      <footer className="border-t border-white/[0.08] bg-[#070B14]/90 backdrop-blur-xl py-10 px-4 sm:px-6 lg:px-8 mt-auto">
+        <div className="max-w-5xl mx-auto space-y-8">
           {/* Main Footer Content */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-xs">
             {/* Column 1: Brand & Clickable Logo */}
             <div className="space-y-3 sm:col-span-2">
               <Link to="/" className="flex items-center gap-2.5 w-fit group" title="Vocal Remover Home">
-                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm group-hover:bg-blue-500 transition-colors">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:scale-105 transition-all">
                   <Music className="w-4 h-4" />
                 </div>
-                <span className="font-extrabold text-base text-white tracking-tight">
+                <span className="font-extrabold text-base text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300 tracking-tight">
                   Vocal Remover
                 </span>
               </Link>
-              <p className="text-slate-300 text-xs leading-relaxed max-w-sm">
+              <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
                 Easily remove vocals and create clean karaoke tracks from any song.
                 Fast, private, and simple to use directly on your device.
               </p>

@@ -125,9 +125,9 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onClick={openPicker}
-                className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 sm:p-12 text-center transition-colors duration-150 flex flex-col items-center justify-center ${isDragOver
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : 'border-slate-700 bg-slate-900/80 hover:border-slate-500 hover:bg-slate-900'
+                className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 sm:p-12 text-center transition-all duration-200 flex flex-col items-center justify-center group ${isDragOver
+                    ? 'border-blue-500 bg-blue-500/10 shadow-2xl shadow-blue-500/20 scale-[1.01]'
+                    : 'border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] hover:border-blue-500/50 hover:from-white/[0.07] hover:to-white/[0.02] shadow-xl shadow-black/40'
                     } ${isBusy ? 'pointer-events-none opacity-70' : ''}`}
                 role="button"
                 tabIndex={0}
@@ -150,22 +150,24 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
 
                 {/* Central Icon */}
                 <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform duration-150 ${isDragOver ? 'scale-105 bg-blue-600/20 text-blue-400' : 'bg-slate-800 border border-slate-700 text-blue-400'
+                    className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-200 ${isDragOver
+                        ? 'scale-110 bg-blue-600/30 text-blue-300 border border-blue-400/50 shadow-lg shadow-blue-500/25'
+                        : 'bg-gradient-to-tr from-blue-600/20 via-blue-500/15 to-indigo-500/10 border border-blue-500/30 text-blue-400 group-hover:scale-105 group-hover:border-blue-500/60 shadow-md shadow-blue-500/10'
                         }`}
                 >
                     {isBusy ? (
                         <Loader2 className="w-7 h-7 text-blue-400 animate-spin" />
                     ) : (
-                        <UploadCloud className="w-7 h-7 text-blue-400" />
+                        <UploadCloud className="w-7 h-7 text-blue-400 group-hover:text-blue-300 transition-colors" />
                     )}
                 </div>
 
                 {/* Action Title */}
-                <h3 className="text-lg font-bold text-white tracking-tight mb-1">
+                <h3 className="text-lg sm:text-xl font-extrabold text-white tracking-tight mb-1.5">
                     {isBusy ? 'Reading audio file...' : 'Drop your song here, or browse files'}
                 </h3>
-                <p className="text-sm text-slate-300 max-w-md mb-6 leading-relaxed">
-                    Upload any song to remove vocals and create karaoke tracks.
+                <p className="text-xs sm:text-sm text-slate-300 max-w-md mb-6 leading-relaxed">
+                    Upload any song to isolate clean vocals and create instrumental karaoke tracks.
                 </p>
 
                 {/* Format Badges */}
@@ -173,13 +175,13 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                     {['MP3', 'WAV', 'FLAC', 'M4A', 'OGG'].map((format) => (
                         <span
                             key={format}
-                            className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 border border-slate-700 text-slate-200 flex items-center gap-1.5"
+                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/[0.04] border border-white/[0.08] text-slate-300 flex items-center gap-1.5 shadow-xs"
                         >
                             <FileAudio className="w-3 h-3 text-blue-400" />
                             {format}
                         </span>
                     ))}
-                    <span className="text-xs text-slate-400 ml-1">Up to 150 MB</span>
+                    <span className="text-[11px] font-medium text-slate-400 ml-1">Up to 150 MB</span>
                 </div>
 
                 {/* Action Buttons: Local Upload & YouTube Link */}
@@ -188,7 +190,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                         type="button"
                         onClick={openPicker}
                         disabled={isBusy}
-                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer"
                     >
                         <UploadCloud className="w-4 h-4" />
                         <span>Select Song</span>
@@ -201,7 +203,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                             if (onYouTubeClick) onYouTubeClick();
                         }}
                         disabled={isBusy}
-                        className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-900 border border-slate-700 hover:border-red-500/50 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer group"
+                        className="px-5 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] active:scale-95 border border-white/10 hover:border-red-500/40 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer group hover:-translate-y-0.5 active:translate-y-0"
                     >
                         <YouTubeIcon className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
                         <span>YouTube Link</span>
