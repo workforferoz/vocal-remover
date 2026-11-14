@@ -470,47 +470,6 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
 
               {/* Purchase Full Software on WhatsApp Button */}
               <div className="pt-2 space-y-2 border-t border-white/[0.06]">
-                {/* Account Email Indicator / Input */}
-                <div className="p-3 rounded-xl bg-black/40 border border-white/[0.08] space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-300 font-semibold flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Account Email:</span>
-                    </span>
-                    {isAuthenticated && user?.email ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Linked</span>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => openAuthModal('login')}
-                        className="text-[11px] text-blue-400 hover:text-white underline cursor-pointer"
-                      >
-                        Sign In
-                      </button>
-                    )}
-                  </div>
-
-                  {isAuthenticated && user?.email ? (
-                    <div className="text-xs font-mono text-white bg-slate-900/90 px-3 py-1.5 rounded-lg border border-white/10 truncate">
-                      {user.email}
-                    </div>
-                  ) : (
-                    <input
-                      type="email"
-                      value={manualEmail}
-                      onChange={(e) => setManualEmail(e.target.value)}
-                      placeholder="Enter your account email (for license delivery)"
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
-                    />
-                  )}
-                  <p className="text-[10px] text-slate-400 leading-tight">
-                    This email is included in your WhatsApp message for immediate software license activation.
-                  </p>
-                </div>
-
                 <a
                   href={softwarePurchaseWaLink}
                   target="_blank"
