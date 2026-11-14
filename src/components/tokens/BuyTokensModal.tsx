@@ -52,8 +52,8 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
 
   const handleClose = onClose || closeModal;
 
-  // Active view: 'both' | 'tokens' | 'software'
-  const [activeTab, setActiveTab] = useState<'both' | 'tokens' | 'software'>('both');
+  // Active view: 'tokens' | 'software'
+  const [activeTab, setActiveTab] = useState<'tokens' | 'software'>('tokens');
 
   // Token Purchase Selection State
   const [selectedTokens, setSelectedTokens] = useState<number>(25);
@@ -120,11 +120,11 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
     'Hello Ayesha Tech Studio, I want to purchase the full Lifetime Software License for Vocal Remover.'
   )}`;
 
-  const showTokens = activeTab === 'both' || activeTab === 'tokens';
-  const showSoftware = activeTab === 'both' || activeTab === 'software';
+  const showTokens = activeTab === 'tokens';
+  const showSoftware = activeTab === 'software';
 
   const cardContent = (
-    <div className={`w-full max-w-4xl bg-[#0C1222]/95 border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/90 overflow-hidden relative flex flex-col backdrop-blur-2xl ${isModal ? 'max-h-[92vh] my-auto' : 'mx-auto'}`}>
+    <div className={`w-full max-w-2xl bg-[#0C1222]/95 border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/90 overflow-hidden relative flex flex-col backdrop-blur-2xl ${isModal ? 'max-h-[92vh] my-auto' : 'mx-auto'}`}>
       {/* Header */}
       <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-start justify-between bg-white/[0.03] shrink-0">
         <div className="flex items-center gap-3">
@@ -183,46 +183,35 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
         )}
       </div>
 
-      {/* Tab Switcher: Move between Purchase Tokens and Software / Code */}
-      <div className="flex border-b border-white/[0.06] bg-black/40 p-1.5 sm:p-2 gap-1.5 shrink-0">
-        <button
-          type="button"
-          onClick={() => setActiveTab('tokens')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'tokens'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
-          }`}
-        >
-          <Coins className="w-4 h-4 text-blue-400" />
-          <span>Buy Tokens</span>
-        </button>
+      {/* Balanced 2-Tab Segmented Control (Side-by-Side button removed) */}
+      <div className="border-b border-white/[0.08] bg-black/40 p-2 sm:p-2.5 flex justify-center shrink-0">
+        <div className="grid grid-cols-2 gap-2 w-full max-w-xl mx-auto p-1 bg-slate-950/70 border border-white/[0.06] rounded-2xl shadow-inner">
+          <button
+            type="button"
+            onClick={() => setActiveTab('tokens')}
+            className={`py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'tokens'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+            }`}
+          >
+            <Coins className={`w-4 h-4 ${activeTab === 'tokens' ? 'text-white' : 'text-blue-400'}`} />
+            <span>Buy Tokens</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('software')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'software'
-              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-              : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
-          }`}
-        >
-          <KeyRound className="w-4 h-4 text-emerald-400" />
-          <span>Software License & Token Code</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('both')}
-          className={`hidden md:flex py-2 px-4 rounded-xl text-xs sm:text-sm font-bold items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            activeTab === 'both'
-              ? 'bg-white/[0.1] text-white border border-white/10 shadow-xs'
-              : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-          title="Display side by side"
-        >
-          <span>Side-by-Side</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('software')}
+            className={`py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'software'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-1 ring-emerald-400/40'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+            }`}
+          >
+            <KeyRound className={`w-4 h-4 ${activeTab === 'software' ? 'text-white' : 'text-emerald-400'}`} />
+            <span className="truncate">Software License & Code</span>
+          </button>
+        </div>
       </div>
 
       {/* Modal/Page Body */}
@@ -240,12 +229,8 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
           </div>
         )}
 
-        {/* Windows Grid: Side-by-Side on desktop when activeTab === 'both', or tabbed */}
-        <div
-          className={`grid gap-6 ${
-            activeTab === 'both' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
-          }`}
-        >
+        {/* Tab View Container */}
+        <div className="w-full">
           {/* WINDOW 1: LIST OF TOKENS TO PURCHASE */}
           {showTokens && (
             <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] space-y-4 flex flex-col justify-between shadow-lg">
@@ -348,6 +333,17 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                 <p className="text-[10px] text-slate-400 text-center leading-snug">
                   Instant token recharge code delivered on WhatsApp from Ayesha Tech Studio.
                 </p>
+
+                <div className="pt-2 flex items-center justify-center border-t border-white/[0.06]">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('software')}
+                    className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-300 transition-colors cursor-pointer group"
+                  >
+                    <span>Already have a code or license key?</span>
+                    <span className="font-bold text-blue-400 group-hover:underline">Activate Code Here &rarr;</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -449,6 +445,17 @@ export const TokenPurchaseArea: React.FC<TokenPurchaseAreaProps> = ({
                 <p className="text-[10px] text-slate-400 text-center leading-snug">
                   Contact WhatsApp ({WHATSAPP_SUPPORT_NUMBER}) for immediate software license activation.
                 </p>
+
+                <div className="pt-2 flex items-center justify-center border-t border-white/[0.06]">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('tokens')}
+                    className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-300 transition-colors cursor-pointer group"
+                  >
+                    <span>Need to purchase conversion tokens instead?</span>
+                    <span className="font-bold text-emerald-400 group-hover:underline">&larr; Buy Tokens</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
