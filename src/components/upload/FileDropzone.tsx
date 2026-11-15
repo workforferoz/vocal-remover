@@ -171,11 +171,15 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                 </p>
 
                 {/* Format Badges */}
-                <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-                    {['MP3', 'WAV', 'FLAC', 'M4A', 'OGG'].map((format) => (
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+                    {['WAV (Lossless)', 'FLAC (Lossless)', 'MP3', 'M4A', 'OGG'].map((format) => (
                         <span
                             key={format}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/[0.04] border border-white/[0.08] text-slate-300 flex items-center gap-1.5 shadow-xs"
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-1.5 shadow-xs ${
+                                format.includes('Lossless')
+                                    ? 'bg-blue-500/15 border-blue-500/40 text-blue-300'
+                                    : 'bg-white/[0.04] border-white/[0.08] text-slate-300'
+                            }`}
                         >
                             <FileAudio className="w-3 h-3 text-blue-400" />
                             {format}
@@ -183,6 +187,11 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                     ))}
                     <span className="text-[11px] font-medium text-slate-400 ml-1">Up to 150 MB</span>
                 </div>
+
+                <p className="text-[11px] text-slate-400 mb-6 flex items-center justify-center gap-1.5 text-center px-4">
+                    <span className="text-amber-400 font-bold">★ Pro Tip:</span>
+                    <span>Use lossless <strong>WAV</strong> or <strong>FLAC</strong> for glitch-free AI results (avoids low-bitrate MP3 compression artifacts).</span>
+                </p>
 
                 {/* Action Buttons: Local Upload & YouTube Link */}
                 <div className="flex flex-wrap items-center justify-center gap-3">

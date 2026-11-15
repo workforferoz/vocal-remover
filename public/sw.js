@@ -3,7 +3,7 @@
  * Enables offline shell access, asset caching, and desktop PWA support.
  */
 
-const CACHE_NAME = 'vocal-studio-ai-v1.2.4';
+const CACHE_NAME = 'vocal-studio-ai-v1.2.5';
 
 // Core Application Shell assets to cache immediately
 const SHELL_ASSETS = [

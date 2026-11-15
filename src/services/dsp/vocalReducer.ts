@@ -9,11 +9,14 @@
  */
 
 export interface ReductionConfig {
-  strength: number; // 0.0 (original) to 1.0 (full reduction)
-  preserveBass?: boolean; // Optional low-frequency retention
-  bassCutoffHz?: number; // Cutoff for bass retention (default ~150Hz)
-  suppressReverb?: boolean; // Attenuates stereo vocal reverb & off-center bleed
+  strength: number; // 0.0 (original) to 1.0 (full reduction, Audacity standard = 1.0)
+  preserveBass?: boolean; // Protects kick drum and bass guitar (Audacity Low Cut = 120 Hz)
+  bassCutoffHz?: number; // Cutoff for bass retention (default 120 Hz)
+  preserveHighAir?: boolean; // Preserves cymbals & high-frequency air (Audacity High Cut = 8000 Hz)
+  highCutHz?: number; // Cutoff for high-frequency retention (default 8000 Hz)
+  suppressReverb?: boolean; // 1kHz - 4kHz vocal bleed masking and stereo reverb suppression
   aggressiveBleedRemoval?: boolean; // Deep vocal suppression
+  cleanAcapellaRumble?: boolean; // High-pass filters acapella below 120 Hz to eliminate bass rumble
   sampleRate?: number;
 }
 
@@ -136,18 +139,40 @@ export function applyVocalReductionSync(
   const vocalRight = new Float32Array(numSamples);
 
   const preserveBass = Boolean(config.preserveBass);
+  const preserveHighAir = Boolean(config.preserveHighAir);
   const suppressReverb = Boolean(config.suppressReverb || config.aggressiveBleedRemoval);
-  const bassCutoff = config.bassCutoffHz || 140;
+  const cleanAcapellaRumble = config.cleanAcapellaRumble !== false;
+  const bassCutoff = config.bassCutoffHz || 120; // Audacity Low Cut standard (protects kick & bass)
+  const highCut = config.highCutHz || 8000; // Audacity High Cut standard (preserves cymbals & air)
 
-  // Bass low-pass filter coefficients (for preserving kick/bass punch)
+  const dt = 1.0 / sampleRate;
+
+  // Bass low-pass filter coefficients (< 120 Hz)
   let bassAlpha = 0;
   if (preserveBass) {
     const rc = 1.0 / (2 * Math.PI * bassCutoff);
-    const dt = 1.0 / sampleRate;
     bassAlpha = dt / (rc + dt);
   }
 
+  // High Air filter coefficients (> 8000 Hz)
+  let highAlpha = 0;
+  if (preserveHighAir) {
+    const rcHigh = 1.0 / (2 * Math.PI * highCut);
+    highAlpha = dt / (rcHigh + dt);
+  }
+
+  // 1 kHz - 4 kHz vocal formant band filter coefficients (for targeted vocal bleed masking)
+  const rcMidLow = 1.0 / (2 * Math.PI * 1000);
+  const rcMidHigh = 1.0 / (2 * Math.PI * 4000);
+  const alphaMidLow = dt / (rcMidLow + dt);
+  const alphaMidHigh = dt / (rcMidHigh + dt);
+
   let prevBass = 0;
+  let prevHighLow = 0;
+  let prevMidLow = 0;
+  let prevMidHigh = 0;
+  let prevVocalLowL = 0;
+  let prevVocalLowR = 0;
   let vocalEnv = 0;
   const envDecay = Math.exp(-1.0 / (sampleRate * 0.05)); // 50ms envelope
 
@@ -167,22 +192,32 @@ export function applyVocalReductionSync(
     let outL = (1.0 - strength) * l + strength * diffL;
     let outR = (1.0 - strength) * r + strength * diffR;
 
-    // Optional Bass preservation: extract bass from mid channel and add back
+    const mid = (l + r) * 0.5;
+
+    // 1. Audacity Low Cut (120 Hz): Extract sub-bass/kick from mid channel and preserve in instrumental
     if (preserveBass) {
-      const mid = (l + r) * 0.5;
       prevBass = prevBass + bassAlpha * (mid - prevBass);
       outL += prevBass * strength;
       outR += prevBass * strength;
     }
 
-    // Optional Reverb / Bleed suppression: when vocal activity is high, suppress side reflections
-    if (suppressReverb && strength > 0.5) {
-      const mid = (l + r) * 0.5;
-      const vocalContent = Math.abs(mid - prevBass);
-      vocalEnv = vocalEnv * envDecay + vocalContent * (1.0 - envDecay);
+    // 2. Audacity High Cut (8000 Hz): Preserve cymbals and high-frequency air
+    if (preserveHighAir) {
+      prevHighLow = prevHighLow + highAlpha * (mid - prevHighLow);
+      const highAir = mid - prevHighLow;
+      outL += highAir * strength;
+      outR += highAir * strength;
+    }
 
-      if (vocalEnv > 0.02) {
-        const suppressionFactor = Math.max(0.25, 1.0 - Math.min(0.75, vocalEnv * 2.2));
+    // 3. Post-Processing EQ Cleanup: 1 kHz - 4 kHz targeted vocal bleed masking
+    if (suppressReverb && strength > 0.5) {
+      prevMidLow = prevMidLow + alphaMidLow * (mid - prevMidLow);
+      prevMidHigh = prevMidHigh + alphaMidHigh * (mid - prevMidHigh);
+      const vocalBandMid = Math.abs(prevMidHigh - prevMidLow);
+      vocalEnv = vocalEnv * envDecay + vocalBandMid * (1.0 - envDecay);
+
+      if (vocalEnv > 0.015) {
+        const suppressionFactor = Math.max(0.3, 1.0 - Math.min(0.7, vocalEnv * 2.5));
         outL *= suppressionFactor;
         outR *= suppressionFactor;
       }
@@ -198,9 +233,18 @@ export function applyVocalReductionSync(
     leftOut[i] = outL;
     rightOut[i] = outR;
 
-    // Vocal extraction (centre-channel frequency difference)
+    // Vocal extraction (isolated acapella)
     let vL = l - outL;
     let vR = r - outR;
+
+    // 4. Acapella Cleanup: 120 Hz High-Pass Filter to remove low-end rumble and bass bleed
+    if (cleanAcapellaRumble && preserveBass) {
+      prevVocalLowL = prevVocalLowL + bassAlpha * (vL - prevVocalLowL);
+      vL = vL - prevVocalLowL;
+      prevVocalLowR = prevVocalLowR + bassAlpha * (vR - prevVocalLowR);
+      vR = vR - prevVocalLowR;
+    }
+
     if (vL > 1.0) vL = 1.0; else if (vL < -1.0) vL = -1.0;
     if (vR > 1.0) vR = 1.0; else if (vR < -1.0) vR = -1.0;
     vocalLeft[i] = vL;
@@ -272,18 +316,40 @@ export async function applyVocalReductionAsync(
   const vocalRight = new Float32Array(numSamples);
 
   const preserveBass = Boolean(config.preserveBass);
+  const preserveHighAir = Boolean(config.preserveHighAir);
   const suppressReverb = Boolean(config.suppressReverb || config.aggressiveBleedRemoval);
-  const bassCutoff = config.bassCutoffHz || 140;
+  const cleanAcapellaRumble = config.cleanAcapellaRumble !== false;
+  const bassCutoff = config.bassCutoffHz || 120; // Audacity Low Cut standard (protects kick & bass)
+  const highCut = config.highCutHz || 8000; // Audacity High Cut standard (preserves cymbals & air)
 
-  // Bass low-pass filter coefficients
+  const dt = 1.0 / sampleRate;
+
+  // Bass low-pass filter coefficients (< 120 Hz)
   let bassAlpha = 0;
   if (preserveBass) {
     const rc = 1.0 / (2 * Math.PI * bassCutoff);
-    const dt = 1.0 / sampleRate;
     bassAlpha = dt / (rc + dt);
   }
 
+  // High Air filter coefficients (> 8000 Hz)
+  let highAlpha = 0;
+  if (preserveHighAir) {
+    const rcHigh = 1.0 / (2 * Math.PI * highCut);
+    highAlpha = dt / (rcHigh + dt);
+  }
+
+  // 1 kHz - 4 kHz vocal formant band filter coefficients (for targeted vocal bleed masking)
+  const rcMidLow = 1.0 / (2 * Math.PI * 1000);
+  const rcMidHigh = 1.0 / (2 * Math.PI * 4000);
+  const alphaMidLow = dt / (rcMidLow + dt);
+  const alphaMidHigh = dt / (rcMidHigh + dt);
+
   let prevBass = 0;
+  let prevHighLow = 0;
+  let prevMidLow = 0;
+  let prevMidHigh = 0;
+  let prevVocalLowL = 0;
+  let prevVocalLowR = 0;
   let vocalEnv = 0;
   const envDecay = Math.exp(-1.0 / (sampleRate * 0.05)); // 50ms envelope
 
@@ -307,22 +373,32 @@ export async function applyVocalReductionAsync(
         let outL = (1.0 - strength) * l + strength * diffL;
         let outR = (1.0 - strength) * r + strength * diffR;
 
-        // Optional Bass preservation
+        const mid = (l + r) * 0.5;
+
+        // 1. Audacity Low Cut (120 Hz): Extract sub-bass/kick from mid channel and preserve in instrumental
         if (preserveBass) {
-          const mid = (l + r) * 0.5;
           prevBass = prevBass + bassAlpha * (mid - prevBass);
           outL += prevBass * strength;
           outR += prevBass * strength;
         }
 
-        // Optional Reverb / Bleed suppression
-        if (suppressReverb && strength > 0.5) {
-          const mid = (l + r) * 0.5;
-          const vocalContent = Math.abs(mid - prevBass);
-          vocalEnv = vocalEnv * envDecay + vocalContent * (1.0 - envDecay);
+        // 2. Audacity High Cut (8000 Hz): Preserve cymbals and high-frequency air
+        if (preserveHighAir) {
+          prevHighLow = prevHighLow + highAlpha * (mid - prevHighLow);
+          const highAir = mid - prevHighLow;
+          outL += highAir * strength;
+          outR += highAir * strength;
+        }
 
-          if (vocalEnv > 0.02) {
-            const suppressionFactor = Math.max(0.25, 1.0 - Math.min(0.75, vocalEnv * 2.2));
+        // 3. Post-Processing EQ Cleanup: 1 kHz - 4 kHz targeted vocal bleed masking
+        if (suppressReverb && strength > 0.5) {
+          prevMidLow = prevMidLow + alphaMidLow * (mid - prevMidLow);
+          prevMidHigh = prevMidHigh + alphaMidHigh * (mid - prevMidHigh);
+          const vocalBandMid = Math.abs(prevMidHigh - prevMidLow);
+          vocalEnv = vocalEnv * envDecay + vocalBandMid * (1.0 - envDecay);
+
+          if (vocalEnv > 0.015) {
+            const suppressionFactor = Math.max(0.3, 1.0 - Math.min(0.7, vocalEnv * 2.5));
             outL *= suppressionFactor;
             outR *= suppressionFactor;
           }
@@ -337,9 +413,18 @@ export async function applyVocalReductionAsync(
         leftOut[i] = outL;
         rightOut[i] = outR;
 
-        // Vocal extraction
+        // Vocal extraction (isolated acapella)
         let vL = l - outL;
         let vR = r - outR;
+
+        // 4. Acapella Cleanup: 120 Hz High-Pass Filter to remove low-end rumble and bass bleed
+        if (cleanAcapellaRumble && preserveBass) {
+          prevVocalLowL = prevVocalLowL + bassAlpha * (vL - prevVocalLowL);
+          vL = vL - prevVocalLowL;
+          prevVocalLowR = prevVocalLowR + bassAlpha * (vR - prevVocalLowR);
+          vR = vR - prevVocalLowR;
+        }
+
         if (vL > 1.0) vL = 1.0; else if (vL < -1.0) vL = -1.0;
         if (vR > 1.0) vR = 1.0; else if (vR < -1.0) vR = -1.0;
         vocalLeft[i] = vL;

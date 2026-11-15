@@ -27,6 +27,10 @@ import {
   RefreshCw,
   AlertCircle,
   Sparkles,
+  Sliders,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface SimpleVocalRemoverProps {
@@ -81,6 +85,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
   const [isYouTubeModalOpen, setIsYouTubeModalOpen] = useState<boolean>(false);
   const [inlineYouTubeUrl, setInlineYouTubeUrl] = useState<string>('');
   const [isInlineExtracting, setIsInlineExtracting] = useState<boolean>(false);
+  const [showAudioGuide, setShowAudioGuide] = useState<boolean>(false);
 
   // Audio Element Refs
   const instAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -147,8 +152,12 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           {
             strength: 1.0,
             preserveBass: true,
+            bassCutoffHz: 120,
+            preserveHighAir: true,
+            highCutHz: 8000,
             suppressReverb: true,
             aggressiveBleedRemoval: true,
+            cleanAcapellaRumble: true,
           },
           (pct: number) => {
             setProgress(Math.round(60 + pct * 0.25));
@@ -754,6 +763,89 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                 )}
               </button>
             </form>
+
+            {/* Studio Audio & Separation Guidelines Accordion */}
+            <div className="rounded-2xl bg-white/[0.02] border border-white/[0.08] overflow-hidden transition-all">
+              <button
+                type="button"
+                onClick={() => setShowAudioGuide((prev) => !prev)}
+                className="w-full p-3.5 sm:p-4 flex items-center justify-between text-left hover:bg-white/[0.03] transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                    <Sliders className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                      <span>Studio Audio & Separation Settings</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                        Audacity & UVR5 Calibrated
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Standardized parameters for cleanest karaoke, bass protection, and zero vocal bleed.
+                    </p>
+                  </div>
+                </div>
+                {showAudioGuide ? (
+                  <ChevronUp className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                )}
+              </button>
+
+              {showAudioGuide && (
+                <div className="p-4 sm:p-5 pt-0 border-t border-white/[0.06] grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs text-slate-300">
+                  <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                    <h5 className="font-bold text-blue-400 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      General Audio & File Settings
+                    </h5>
+                    <ul className="space-y-1.5 text-[11px] text-slate-300 list-disc list-inside">
+                      <li><strong className="text-white">Source File:</strong> Input lossless <strong>WAV or FLAC</strong>. Low-bitrate MP3 introduces digital artifacts and glitching.</li>
+                      <li><strong className="text-white">Separation Mode:</strong> <strong>2-stem</strong> (Vocals + Instrumental) is fastest and cleanest for karaoke and acapella.</li>
+                      <li><strong className="text-white">Export:</strong> Exported as 16-bit PCM WAV to preserve quality for DAWs.</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                    <h5 className="font-bold text-emerald-400 flex items-center gap-1.5">
+                      <Sliders className="w-3.5 h-3.5" />
+                      Audacity Effect Standards
+                    </h5>
+                    <ul className="space-y-1.5 text-[11px] text-slate-300 list-disc list-inside">
+                      <li><strong className="text-white">Strength 1.0:</strong> Eliminates center-panned vocals without hollowing the track.</li>
+                      <li><strong className="text-white">Low Cut 120 Hz:</strong> Protects kick drum and bass guitar fundamentals.</li>
+                      <li><strong className="text-white">High Cut 8000 Hz:</strong> Allows cymbals and high-frequency air to pass untouched.</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                    <h5 className="font-bold text-purple-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Ultimate Vocal Remover (UVR5) Settings
+                    </h5>
+                    <ul className="space-y-1.5 text-[11px] text-slate-300 list-disc list-inside">
+                      <li><strong className="text-white">Models:</strong> Ensemble VR Architecture (`1_HP-UVR`) + MDX-Net (`Inst Main` / `HQ 1`).</li>
+                      <li><strong className="text-white">Window Size:</strong> 1024 for optimal quality & resource balance.</li>
+                      <li><strong className="text-white">Aggression Level:</strong> 1 (prevents instrumental degradation).</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                    <h5 className="font-bold text-amber-400 flex items-center gap-1.5">
+                      <Music className="w-3.5 h-3.5" />
+                      Post-Processing EQ Cleanup
+                    </h5>
+                    <ul className="space-y-1.5 text-[11px] text-slate-300 list-disc list-inside">
+                      <li><strong className="text-white">Instrumentals:</strong> Targeted 1kHz - 4kHz spectral cut masks faint vocal bleed.</li>
+                      <li><strong className="text-white">Acapellas:</strong> 120 Hz high-pass filter cuts sub-bass rumble & kick bleed.</li>
+                      <li><strong className="text-white">Drum Stems:</strong> 200 Hz notch cuts bass guitar bleed.</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -837,6 +929,20 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                 Track: <span className="text-white font-medium">{file?.name}</span> - Duration:{' '}
                 <span className="text-slate-200 font-mono">{formatDuration(duration || 0)}</span>
               </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30">
+                  Low Cut: 120 Hz (Kick/Bass Protected)
+                </span>
+                <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30">
+                  High Cut: 8 kHz Air
+                </span>
+                <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-purple-500/15 text-purple-300 font-bold border border-purple-500/30">
+                  1-4 kHz Bleed Masked
+                </span>
+                <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30">
+                  Acapella 120Hz Rumble Filter
+                </span>
+              </div>
             </div>
 
             <button

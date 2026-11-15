@@ -35,10 +35,10 @@ def suppress_vocal_bleed(
         inst_mag = torch.abs(inst_stft)
         voc_mag = torch.abs(voc_stft)
         
-        # Vocal frequency bin range: 150 Hz to 6500 Hz
+        # Vocal frequency bin range: 1000 Hz to 4000 Hz (targeted vocal bleed masking)
         freq_resolution = sample_rate / n_fft
-        min_bin = max(1, int(150 / freq_resolution))
-        max_bin = min(inst_mag.shape[1] - 1, int(6500 / freq_resolution))
+        min_bin = max(1, int(1000 / freq_resolution))
+        max_bin = min(inst_mag.shape[1] - 1, int(4000 / freq_resolution))
         
         # Soft Wiener-style mask: where vocal energy dominates, attenuate instrumental bleed
         eps = 1e-7
@@ -203,7 +203,15 @@ class DemucsEngine:
         for source_idx, source_name in enumerate(model.sources):
             stem_path = output_dir / f"{source_name}.wav"
             stem_audio = sources[source_idx].cpu()
-            
+
+            # Post-Processing EQ Cleanup based on mastering guidelines:
+            if source_name.lower() == "vocals":
+                # For Acapellas: Apply high-pass filter at 120 Hz to remove low-end rumble and bass bleed
+                try:
+                    stem_audio = torchaudio.functional.highpass_biquad(stem_audio, model.samplerate, cutoff_freq=120.0)
+                except Exception as e:
+                    logger.warning(f"Acapella highpass filter skipped: {e}")
+
             # Clamp to prevent audio clipping distortion
             stem_audio = torch.clamp(stem_audio, -1.0, 1.0)
             
