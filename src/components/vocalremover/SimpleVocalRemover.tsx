@@ -71,6 +71,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
   const [vocalsUrl, setVocalsUrl] = useState<string | null>(null);
   const [instrumentalBlob, setInstrumentalBlob] = useState<Blob | null>(null);
   const [vocalsBlob, setVocalsBlob] = useState<Blob | null>(null);
+  const [engineUsed, setEngineUsed] = useState<'ai' | 'dsp'>('dsp');
 
   // Playback State
   const [isPlayingInst, setIsPlayingInst] = useState<boolean>(false);
@@ -178,6 +179,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
         setVocalsBlob(vocBlob);
         setInstrumentalUrl(instUrl);
         setVocalsUrl(vocUrl);
+        setEngineUsed('dsp');
 
         // Save to project store
         const projId = `song_${Date.now()}`;
@@ -341,6 +343,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
                 setVocalsBlob(vocBlob);
                 setInstrumentalUrl(instUrl);
                 setVocalsUrl(vocUrl);
+                setEngineUsed('ai');
 
                 // Save project record
                 const projId = `song_${Date.now()}`;
@@ -671,6 +674,7 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
     setVocalsUrl(null);
     setInstrumentalBlob(null);
     setVocalsBlob(null);
+    setEngineUsed('dsp');
     setIsPlayingInst(false);
     setIsPlayingVocals(false);
     setIsPlayingBoth(false);
@@ -942,11 +946,20 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
           {/* Header Bar */}
           <div className="p-5 sm:p-6 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                   Vocals Removed Successfully
                 </h2>
+                {engineUsed === 'ai' ? (
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
+                    ✨ Demucs AI Studio Master (Zero Vocal Bleed)
+                  </span>
+                ) : (
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">
+                    ⚡ Fast Browser DSP Preview (Phase Cancelled)
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-300 mt-1 truncate max-w-lg">
                 Track: <span className="text-white font-medium">{file?.name}</span> - Duration:{' '}
@@ -977,6 +990,24 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               <span>Process Another Song</span>
             </button>
           </div>
+
+          {/* Engine Quality Guidance Banner */}
+          {engineUsed === 'dsp' && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3.5 text-amber-200 text-xs shadow-md">
+              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-amber-100 text-sm">
+                  Notice: Processed via Fast Browser DSP (Phase Cancellation)
+                </h4>
+                <p className="text-[12px] text-amber-200/90 leading-relaxed">
+                  Because the local AI engine was offline, this file was extracted using in-browser stereo phase cancellation. In acoustic and Indian film songs, stereo vocal reverb tails and stereo backing delay cannot be removed by browser math alone.
+                </p>
+                <p className="text-[12px] text-amber-200 font-medium pt-0.5">
+                  👉 To eliminate 100% of residual vocal bleed and generate pure studio master tracks, start the local AI engine via <code className="px-1.5 py-0.5 rounded bg-black/50 text-amber-100 font-mono text-[11px]">start-app.bat</code>.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Master Scrubber Timeline */}
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.08] backdrop-blur-md space-y-2.5 shadow-lg">
