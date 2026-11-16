@@ -47,9 +47,47 @@ namespace VocalRemover
                     catch { }
                 }
 
-                // 2. Check active local engines and dev servers
+                // 2. Check or launch local Demucs AI Engine
                 if (string.IsNullOrEmpty(targetUrl))
                 {
+                    // If local-engine venv exists and 8524 is not responding, try auto-starting it silently
+                    if (!IsServerResponding("http://127.0.0.1:8524"))
+                    {
+                        string localEngineDir = Path.Combine(appDir, "local-engine");
+                        if (!Directory.Exists(localEngineDir))
+                        {
+                            DirectoryInfo parent = Directory.GetParent(appDir);
+                            string parentEngine = (parent != null) ? Path.Combine(parent.FullName, "local-engine") : "";
+                            if (Directory.Exists(parentEngine)) localEngineDir = parentEngine;
+                        }
+
+                        string pythonExe = Path.Combine(localEngineDir, ".venv", "Scripts", "python.exe");
+                        if (File.Exists(pythonExe))
+                        {
+                            try
+                            {
+                                ProcessStartInfo enginePsi = new ProcessStartInfo
+                                {
+                                    FileName = pythonExe,
+                                    Arguments = "-m uvicorn app.main:app --host 127.0.0.1 --port 8524",
+                                    WorkingDirectory = localEngineDir,
+                                    WindowStyle = ProcessWindowStyle.Hidden,
+                                    CreateNoWindow = true,
+                                    UseShellExecute = false
+                                };
+                                Process.Start(enginePsi);
+
+                                // Wait up to 3 seconds for loopback socket to accept connections
+                                for (int i = 0; i < 6; i++)
+                                {
+                                    Thread.Sleep(500);
+                                    if (IsServerResponding("http://127.0.0.1:8524")) break;
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+
                     if (IsServerResponding("http://127.0.0.1:8524"))
                     {
                         targetUrl = "http://127.0.0.1:8524";

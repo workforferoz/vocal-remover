@@ -715,6 +715,29 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
               Extract the <strong>instrumental (karaoke)</strong> and isolate clean vocals from any song.
               Fast, private, and studio quality.
             </p>
+
+            {/* AI Separation Engine Connection Status */}
+            <div className="pt-1 flex justify-center">
+              {engineHealth.connected ? (
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>
+                    Demucs v4 AI Engine Connected ({engineHealth.device || 'Active'}) • Studio Quality • Zero Vocal Bleed
+                  </span>
+                </div>
+              ) : (
+                <div className="inline-flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 px-4 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-200 text-xs text-center shadow-sm">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    <span className="font-semibold">Fast Browser DSP Mode</span>
+                  </div>
+                  <span className="hidden sm:inline text-amber-400/60">•</span>
+                  <span className="text-amber-300/90 text-[11px]">
+                    To unlock 99% studio-grade separation with zero vocal bleed, start the AI Engine via <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-200 font-mono text-[10px]">start-app.bat</code>
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Big Audio Dropzone & YouTube Option */}
