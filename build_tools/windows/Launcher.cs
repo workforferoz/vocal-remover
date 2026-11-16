@@ -53,32 +53,48 @@ namespace VocalRemover
                     // If local-engine venv exists and 8524 is not responding, try auto-starting it silently
                     if (!IsServerResponding("http://127.0.0.1:8524"))
                     {
-                        string localEngineDir = Path.Combine(appDir, "local-engine");
-                        if (!Directory.Exists(localEngineDir))
+                        string[] candidateDirs = new string[]
                         {
-                            DirectoryInfo parent = Directory.GetParent(appDir);
-                            string parentEngine = (parent != null) ? Path.Combine(parent.FullName, "local-engine") : "";
-                            if (Directory.Exists(parentEngine)) localEngineDir = parentEngine;
+                            Path.Combine(appDir, "local-engine"),
+                            (Directory.GetParent(appDir) != null) ? Path.Combine(Directory.GetParent(appDir).FullName, "local-engine") : "",
+                            @"E:\vocal remover\local-engine",
+                            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "vocal-remover", "local-engine")
+                        };
+
+                        string foundPython = null;
+                        string foundEngineDir = null;
+
+                        foreach (string dir in candidateDirs)
+                        {
+                            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                            {
+                                string pyPath = Path.Combine(dir, ".venv", "Scripts", "python.exe");
+                                if (File.Exists(pyPath))
+                                {
+                                    foundPython = pyPath;
+                                    foundEngineDir = dir;
+                                    break;
+                                }
+                            }
                         }
 
-                        string pythonExe = Path.Combine(localEngineDir, ".venv", "Scripts", "python.exe");
-                        if (File.Exists(pythonExe))
+                        if (!string.IsNullOrEmpty(foundPython))
                         {
                             try
                             {
                                 ProcessStartInfo enginePsi = new ProcessStartInfo
                                 {
-                                    FileName = pythonExe,
+                                    FileName = foundPython,
                                     Arguments = "-m uvicorn app.main:app --host 127.0.0.1 --port 8524",
-                                    WorkingDirectory = localEngineDir,
+                                    WorkingDirectory = foundEngineDir,
                                     WindowStyle = ProcessWindowStyle.Hidden,
                                     CreateNoWindow = true,
                                     UseShellExecute = false
                                 };
                                 Process.Start(enginePsi);
 
-                                // Wait up to 3 seconds for loopback socket to accept connections
-                                for (int i = 0; i < 6; i++)
+                                // Wait up to 3.5 seconds for loopback socket to accept connections
+                                for (int i = 0; i < 7; i++)
                                 {
                                     Thread.Sleep(500);
                                     if (IsServerResponding("http://127.0.0.1:8524")) break;
