@@ -57,4 +57,9 @@ android/build/
 *.apk
 *.aab
 
+# Audio scratch and generated output
+scratch_test/
+separated_output/
+
+
 
