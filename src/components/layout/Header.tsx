@@ -5,7 +5,6 @@ import { TokenPill } from '../tokens/TokenPill';
 import { useTokenStore } from '../../store/useTokenStore';
 import { useUserStore } from '../../store/useUserStore';
 import {
-  Music,
   FolderKanban,
   Settings as SettingsIcon,
   Menu,
@@ -59,9 +58,11 @@ export const Header: React.FC = () => {
             className="flex items-center gap-2.5 group focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl p-1"
             title="Vocal Remover Home"
           >
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:scale-105 transition-all">
-              <Music className="w-4 h-4" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Vocal Remover Logo"
+              className="w-9 h-9 rounded-xl object-contain shadow-md shadow-purple-500/25 group-hover:scale-105 transition-all"
+            />
             <span className="font-extrabold text-base sm:text-lg text-white tracking-tight">
               Vocal Remover
             </span>

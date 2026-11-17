@@ -116,12 +116,37 @@ namespace VocalRemoverInstaller
             this.ForeColor = Color.FromArgb(248, 250, 252); // #F8FAFC
             this.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
+            // Set Form Icon from embedded app.ico
+            try
+            {
+                using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("app.ico"))
+                {
+                    if (s != null) this.Icon = new Icon(s);
+                }
+            }
+            catch { }
+
             // Title Banner
             Panel topPanel = new Panel();
             topPanel.Dock = DockStyle.Top;
             topPanel.Height = 85;
             topPanel.BackColor = Color.FromArgb(8, 13, 24); // #080D18
             this.Controls.Add(topPanel);
+
+            // App Logo Preview on top right
+            PictureBox picLogo = new PictureBox();
+            picLogo.Location = new Point(430, 14);
+            picLogo.Size = new Size(56, 56);
+            picLogo.SizeMode = PictureBoxSizeMode.Zoom;
+            try
+            {
+                using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("app.ico"))
+                {
+                    if (s != null) picLogo.Image = new Icon(s, 64, 64).ToBitmap();
+                }
+            }
+            catch { }
+            topPanel.Controls.Add(picLogo);
 
             Label lblTitle = new Label();
             lblTitle.Text = "Vocal Remover - Desktop Setup";

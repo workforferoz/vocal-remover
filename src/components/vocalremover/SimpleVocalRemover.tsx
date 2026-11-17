@@ -708,9 +708,11 @@ export const SimpleVocalRemover: React.FC<SimpleVocalRemoverProps> = ({ initialF
         <div className="space-y-6">
           <div className="text-center space-y-3.5 py-4">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight flex items-center justify-center gap-3">
-              <span className="p-2 sm:p-2.5 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/25">
-                <Music className="w-6 h-6 sm:w-7 sm:h-7" />
-              </span>
+              <img
+                src="/logo.png"
+                alt="Vocal Remover Logo"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-contain shadow-lg shadow-purple-500/30"
+              />
               <span>
                 Vocal Remover
               </span>
