@@ -11,6 +11,7 @@ namespace VocalRemover
     {
         private static HttpListener _listener;
         private static string _webRoot;
+        private static DateTime _lastRequestTime = DateTime.Now;
 
         [STAThread]
         static void Main()
@@ -93,8 +94,8 @@ namespace VocalRemover
                                 };
                                 Process.Start(enginePsi);
 
-                                // Wait up to 3.5 seconds for loopback socket to accept connections
-                                for (int i = 0; i < 7; i++)
+                                // Wait up to 6 seconds for loopback socket to accept connections
+                                for (int i = 0; i < 12; i++)
                                 {
                                     Thread.Sleep(500);
                                     if (IsServerResponding("http://127.0.0.1:8524")) break;
@@ -171,13 +172,16 @@ namespace VocalRemover
                 // If running local embedded static server, keep launcher alive while browser is active
                 if (_listener != null && _listener.IsListening)
                 {
-                    if (browserProc != null)
+                    // Allow initial Edge/Chrome window time to load
+                    Thread.Sleep(3000);
+                    while (_listener != null && _listener.IsListening)
                     {
-                        browserProc.WaitForExit();
-                    }
-                    else
-                    {
-                        Thread.Sleep(300000);
+                        Thread.Sleep(2000);
+                        // Only exit if no requests received for over 45 minutes
+                        if ((DateTime.Now - _lastRequestTime).TotalMinutes > 45)
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -230,6 +234,7 @@ namespace VocalRemover
         {
             try
             {
+                _lastRequestTime = DateTime.Now;
                 string rawUrl = context.Request.Url.AbsolutePath.TrimStart('/');
                 if (string.IsNullOrEmpty(rawUrl)) rawUrl = "index.html";
 
@@ -274,12 +279,14 @@ namespace VocalRemover
         {
             try
             {
-                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-                req.Timeout = 500;
-                req.Method = "HEAD";
-                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                Uri uri = new Uri(url);
+                using (System.Net.Sockets.TcpClient client = new System.Net.Sockets.TcpClient())
                 {
-                    return resp.StatusCode == HttpStatusCode.OK;
+                    IAsyncResult result = client.BeginConnect(uri.Host, uri.Port, null, null);
+                    bool success = result.AsyncWaitHandle.WaitOne(600);
+                    if (!success) return false;
+                    client.EndConnect(result);
+                    return true;
                 }
             }
             catch
